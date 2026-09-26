@@ -1,0 +1,12 @@
+{
+  "name": "taiwan-tour-guide",
+  "version": "0.1.0",
+  "description": "台灣小導遊:景點推薦、交通路線規劃、美食玩樂指南",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "MIT"
+}
