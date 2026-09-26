@@ -1,7 +1,7 @@
 // 「問導遊」AI 版:在 claude.ai 上開啟時,由 Claude 理解問題,
 // 並透過下方工具查詢 App 內的景點、美食、交通資料後回答。
 // 無法使用時(直接開檔、未授權等)回傳 null,由 guide.js 的離線規則接手。
-import { DESTINATIONS, INTERESTS, REGIONS, getDestination } from './data.js';
+import { DESTINATIONS, INTERESTS, REGIONS, getDestination, shopsOf } from './data.js';
 import { planAlternatives, placeName } from './planner.js';
 import { recommend, generateItinerary, PACES } from './itinerary.js';
 import { findDestinations } from './guide.js';
@@ -17,7 +17,7 @@ function resolvePlace(name) {
 const TOOLS = [
   {
     name: 'get_destination',
-    description: '查詢一個地點(城市/景區)的介紹、在地交通、所有景點與美食。回傳 JSON。',
+    description: '查詢一個地點(城市/景區)的介紹、在地交通、所有景點、美食類型,以及具體的在地知名店家(shops)。回傳 JSON。',
     inputSchema: { type: 'object', properties: { name: { type: 'string', description: '地點名稱,例如 台南、九份、日月潭' } }, required: ['name'] },
     execute({ name }) {
       const d = getDestination(resolvePlace(name));
@@ -25,6 +25,7 @@ const TOOLS = [
         name: d.name, region: d.region, intro: d.intro, localTransport: d.localTransport,
         attractions: d.attractions.map((a) => ({ name: a.name, hours: a.hours, tags: a.tags, desc: a.desc, tip: a.tip, nightOnly: a.evening })),
         foods: d.foods.map((f) => ({ name: f.name, type: f.type, desc: f.desc })),
+        shops: shopsOf(d.id).map((x) => ({ name: x.name, dish: x.dish, area: x.area, note: x.note })),
       };
     },
   },
@@ -100,11 +101,13 @@ const TOOLS = [
 const RULES = `你是「台灣小導遊」App 裡的導遊,用台灣繁體中文、親切口語地回答旅客。
 規則:
 1. 回答景點、美食、交通、行程時,先用工具查 App 資料,再根據結果回答;不要編造店名、班次或票價。
-2. App 資料沒有的內容,可以用你確定的一般常識補充,但要說明「建議出發前再確認」。
-3. 交通時間與票價一律說是「約」、「參考」。
-4. 問題不清楚(例如沒說從哪裡出發)時,先用最合理的假設回答(預設從台北出發),並在最後一句提醒可以告訴你出發地。
-5. 格式:純文字,不要用 Markdown 標題、粗體或表格;條列用「・」;整體 250 字以內,重點先講。
-6. 與旅遊無關的問題,簡短回應後把話題帶回台灣旅遊。
+2. 問美食時,優先推薦 get_destination 回傳的 shops(具體店名+在哪裡+特色),店名要一字不差照抄,App 會自動附上 Google 地圖連結。
+3. 你看不到 Google 評分:絕對不要寫出星等、評論數或「Google 4.5 分」之類的數字;需要時說「可以點下方地圖連結看最新評分」。
+4. App 資料沒有的內容,只補充你非常確定的知名店家或常識,並說明「建議出發前再確認營業時間」。
+5. 交通時間與票價一律說是「約」、「參考」。
+6. 問題不清楚(例如沒說從哪裡出發)時,先用最合理的假設回答(預設從台北出發),並在最後一句提醒可以告訴你出發地。
+7. 格式:純文字,不要用 Markdown 標題、粗體或表格;條列用「・」;整體 250 字以內,重點先講。
+8. 與旅遊無關的問題,簡短回應後把話題帶回台灣旅遊。
 App 收錄的地點:${DESTINATIONS.map((d) => d.name).join('、')}。
 興趣標籤:${INTERESTS.map((i) => i.key).join('、')}。
 今天日期:${new Date().toISOString().slice(0, 10)}。`;

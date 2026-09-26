@@ -405,3 +405,73 @@ export const MODE_INFO = {
 export function getDestination(id) {
   return DESTINATIONS.find((d) => d.id === id);
 }
+
+// 在地知名店家(依長年口碑與媒體報導整理)。
+// 不寫死評分:評分會變動,畫面上一律附 Google 地圖連結,讓旅客看即時星等與評論。
+// 營業時間、是否搬遷請以 Google 地圖或店家公告為準。
+export const SHOPS = {
+  taipei: [
+    { name: '阜杭豆漿', dish: '早餐', area: '華山市場 2 樓・善導寺站', note: '厚燒餅夾蛋、鹹豆漿,早上常排隊 30 分鐘以上。' },
+    { name: '林東芳牛肉麵', dish: '牛肉麵', area: '八德路', note: '半筋半肉加牛油辣椒是招牌吃法。' },
+    { name: '永康牛肉麵', dish: '牛肉麵', area: '永康街・東門站', note: '川味紅燒老店。' },
+    { name: '鼎泰豐 信義店', dish: '小籠包', area: '信義路・東門站', note: '十八摺小籠包創始店,可線上取號。' },
+    { name: '金峰滷肉飯', dish: '滷肉飯', area: '南昌路・中正紀念堂站', note: '平價排隊名店,翻桌快。' },
+    { name: '福州世祖胡椒餅', dish: '饒河街觀光夜市', area: '饒河夜市入口・松山站', note: '炭烤胡椒餅,現烤出爐要等。' },
+  ],
+  jiufen: [
+    { name: '阿柑姨芋圓', dish: '芋圓', area: '九份豎崎路旁', note: '座位可看山海景。' },
+    { name: '賴阿婆芋圓', dish: '芋圓', area: '九份基山街', note: '手工芋圓老店。' },
+  ],
+  tamsui: [
+    { name: '淡水文化阿給', dish: '阿給', area: '真理街', note: '淡水阿給老店之一。' },
+    { name: '三協成', dish: '伴手禮', area: '淡水中正路', note: '百年糕餅老店。' },
+  ],
+  keelung: [
+    { name: '李鵠餅店', dish: '伴手禮', area: '仁三路・廟口附近', note: '百年餅店,鳳梨酥、綠豆椪。' },
+  ],
+  taoyuan: [
+    { name: '黃日香豆干', dish: '大溪豆干', area: '大溪和平老街', note: '大溪豆干代表品牌。' },
+  ],
+  taichung: [
+    { name: '春水堂 四維創始店', dish: '珍珠奶茶', area: '四維街', note: '珍珠奶茶發源店之一。' },
+    { name: '宮原眼科', dish: '甜點', area: '中山路・台中車站旁', note: '冰淇淋與糕點禮盒,建築本身就是景點。' },
+    { name: '陳允寶泉', dish: '太陽餅', area: '台中市區多家門市', note: '百年太陽餅老店。' },
+  ],
+  sunmoonlake: [
+    { name: '玄光寺阿婆茶葉蛋', dish: '香菇茶葉蛋', area: '玄光寺碼頭', note: '搭船遊湖時順路買。' },
+  ],
+  chiayi: [
+    { name: '噴水火雞肉飯', dish: '火雞肉飯', area: '中正路・噴水圓環', note: '最知名的火雞肉飯老店。' },
+    { name: '劉里長雞肉飯', dish: '火雞肉飯', area: '公明路', note: '在地人常吃的排隊店。' },
+  ],
+  tainan: [
+    { name: '阿堂鹹粥', dish: '早餐', area: '西門路', note: '虱目魚鹹粥,清晨開賣、中午前收。' },
+    { name: '六千牛肉湯', dish: '牛肉湯', area: '海安路', note: '清晨開賣,賣完就收。' },
+    { name: '阿村第二代牛肉湯', dish: '牛肉湯', area: '保安路', note: '牛肉湯名店,營業到中午前後。' },
+    { name: '富盛號碗粿', dish: '碗粿', area: '西門路・赤崁樓附近', note: '碗粿老字號。' },
+    { name: '度小月擔仔麵 原始店', dish: '擔仔麵', area: '中正路', note: '擔仔麵起源老店。' },
+    { name: '周氏蝦捲', dish: '蝦捲', area: '安平路', note: '安平代表小吃。' },
+  ],
+  kaohsiung: [
+    { name: '興隆居', dish: '早餐', area: '六合二路', note: '湯包、燒餅早餐老店。' },
+    { name: '港園牛肉麵', dish: '牛肉麵', area: '大成街・鹽埕', note: '拌牛肉麵是招牌。' },
+    { name: '高雄婆婆冰', dish: '甜點', area: '七賢三路・鹽埕', note: '水果冰老店。' },
+  ],
+  kenting: [
+    { name: '阿伯綠豆饌', dish: '綠豆蒜', area: '恆春鎮', note: '恆春綠豆饌老店。' },
+  ],
+  hualien: [
+    { name: '戴記扁食', dish: '扁食', area: '中華路', note: '花蓮扁食代表店之一。' },
+    { name: '液香扁食', dish: '扁食', area: '信義街', note: '湯頭清甜的扁食老店。' },
+    { name: '曾記麻糬', dish: '花蓮麻糬', area: '花蓮市區多家門市', note: '麻糬伴手禮代表品牌。' },
+  ],
+  taitung: [
+    { name: '悟饕池上飯包文化故事館', dish: '池上便當', area: '池上鄉', note: '結合便當與米食文化展示。' },
+    { name: '全美行', dish: '池上便當', area: '池上鄉', note: '池上老字號飯包店。' },
+  ],
+};
+
+export function shopsOf(destId, dish) {
+  const list = SHOPS[destId] ?? [];
+  return dish ? list.filter((x) => x.dish === dish) : list;
+}

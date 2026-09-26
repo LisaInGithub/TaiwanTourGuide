@@ -44,3 +44,9 @@ test('看夕陽會找介紹裡提到夕陽的景點', () => {
 test('指定食物種類會篩選', () => {
   assert.match(askGuide('我在高雄,想吃海鮮').text, /旗津/);
 });
+
+test('問美食會推薦具體店家,且不寫評分數字', () => {
+  const a = askGuide('台南早餐吃什麼');
+  assert.match(a.text, /阿堂鹹粥|六千牛肉湯/);
+  assert.doesNotMatch(a.text, /\d\.\d\s*(分|顆星)/);
+});

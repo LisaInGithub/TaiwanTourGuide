@@ -1,4 +1,4 @@
-import { DESTINATIONS, INTERESTS, REGIONS, MODE_INFO, getDestination } from './data.js';
+import { DESTINATIONS, INTERESTS, REGIONS, MODE_INFO, SHOPS, getDestination, shopsOf } from './data.js';
 import { planAlternatives, planMultiStop, formatDuration, placeName, TRANSFER_MINUTES } from './planner.js';
 import { generateItinerary, recommend, PACES } from './itinerary.js';
 import { askGuide } from './guide.js';
@@ -93,7 +93,32 @@ function routeCard(r, from, to) {
   </div>`;
 }
 
-const SAMPLE_QUESTIONS = ['台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?', '下雨天台中去哪?'];
+// 回答裡提到的店家與景點 → Google 地圖連結(看即時評分與評論)
+const PLACE_INDEX = [
+  ...Object.entries(SHOPS).flatMap(([destId, list]) => list.map((x) => ({ name: x.name, query: `${x.name} ${getDestination(destId).name}` }))),
+  ...DESTINATIONS.flatMap((d) => d.attractions.map((a) => ({ name: a.name.replace(/(.*?)/g, ''), query: a.name.replace(/(.*?)/g, '') }))),
+].sort((x, y) => y.name.length - x.name.length);
+
+function placeLinks(text) {
+  const found = [];
+  let rest = text;
+  for (const p of PLACE_INDEX) {
+    const short = p.name.split('・')[0];
+    const key = rest.includes(p.name) ? p.name : short.length >= 3 && rest.includes(short) ? short : null;
+    if (!key) continue;
+    found.push(p);
+    rest = rest.split(key).join('');
+    if (found.length >= 8) break;
+  }
+  return found;
+}
+
+function linkChips(links) {
+  if (!links?.length) return '';
+  return `<div class="chips links">${links.map((p) => `<a class="chip small" href="${mapsUrl(p.query)}" target="_blank" rel="noopener">📍 ${esc(p.name)}</a>`).join('')}</div>`;
+}
+
+const SAMPLE_QUESTIONS = ['台南早餐吃什麼?', '台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?'];
 
 function aiBadge() {
   if (state.aiMode === 'ai') return '<span class="tag">✨ 由 Claude 回答</span>';
@@ -107,7 +132,7 @@ function renderHome() {
   return `
     <div class="card">
       <div class="row spread"><h2 style="margin:0">💬 問問小導遊</h2>${aiBadge()}</div>
-      <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}</div>`).join('')}</div>
+      <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}${linkChips(m.links)}</div>`).join('')}</div>
       <form class="ask" data-form="ask">
         <input type="text" name="q" id="ask-q" placeholder="例:花蓮三天怎麼玩?" autocomplete="off" ${state.chatBusy ? 'disabled' : ''} />
         <button class="btn" type="submit" ${state.chatBusy ? 'disabled' : ''}>${state.chatBusy ? '回答中…' : '送出'}</button>
@@ -213,6 +238,14 @@ function renderExplore() {
     </div>
     <h2>😋 好吃的</h2>
     ${foods || '<div class="empty">這裡以自然景觀為主,建議回到鄰近市區用餐。</div>'}
+    ${shopsOf(d.id).length ? `<h2>📍 在地名店</h2>
+    <p class="muted small">長年口碑老店。評分會變動,點「看 Google 評分」可看最新星等、評論與營業時間。</p>
+    <div class="grid">${shopsOf(d.id).map((x) => `<div class="card">
+      <h3>${esc(x.name)}</h3>
+      <div class="muted small">${esc(x.dish)} ・ ${esc(x.area)}</div>
+      <p class="small">${esc(x.note)}</p>
+      <a class="btn ghost small" href="${mapsUrl(`${x.name} ${d.name}`)}" target="_blank" rel="noopener">⭐ 看 Google 評分</a>
+    </div>`).join('')}</div>` : ''}
     <h2>🎡 好玩的</h2>
     <div class="grid">${d.attractions.map((a) => spotCard({ ...a, destName: d.name })).join('') || '<div class="empty">此地為交通轉運點</div>'}</div>`;
 }
@@ -289,7 +322,7 @@ async function sendQuestion(raw) {
   state.chat.push({ who: 'me', text: q });
 
   if (state.aiMode === 'offline') {
-    state.chat.push({ who: 'bot', text: local.text });
+    state.chat.push({ who: 'bot', text: local.text, links: placeLinks(local.text) });
     render();
     view.querySelector('#ask-q')?.focus();
     return;
@@ -322,6 +355,7 @@ async function sendQuestion(raw) {
   } else {
     bot.text = res.text;
   }
+  bot.links = placeLinks(bot.text);
   state.chatBusy = false;
   render();
   view.querySelector('#ask-q')?.focus();

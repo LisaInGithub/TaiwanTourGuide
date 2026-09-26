@@ -52,3 +52,9 @@ test('離島不會被當成轉乘點', () => {
     assert.ok(r.legs.every((l) => !l.stops.slice(1, -1).includes('penghu') && l.to !== 'penghu'));
   }
 });
+
+test('店家資料只掛在存在的地點', async () => {
+  const { SHOPS } = await import('../js/data.js');
+  const ids = new Set(DESTINATIONS.map((d) => d.id));
+  for (const k of Object.keys(SHOPS)) assert.ok(ids.has(k), k);
+});

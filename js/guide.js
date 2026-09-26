@@ -1,6 +1,6 @@
 // 「問導遊」離線版:以關鍵字理解旅客問題,回覆景點、美食、交通與行程建議。
 // 在 claude.ai 上開啟時會改由 Claude 回答(見 js/ai-guide.js),這裡是沒有網路或無法使用 AI 時的備援。
-import { DESTINATIONS, REGIONS, INTERESTS, getDestination } from './data.js';
+import { DESTINATIONS, REGIONS, INTERESTS, getDestination, shopsOf } from './data.js';
 import { planAlternatives, formatDuration, placeName } from './planner.js';
 import { recommend, generateItinerary } from './itinerary.js';
 
@@ -135,9 +135,14 @@ export function askGuide(question) {
       const shown = list.length ? list : dest.foods;
       if (!shown.length) return { text: `${dest.name}以自然景觀為主,比較少特色小吃,建議回到鄰近市區用餐。` };
       const note = foodWord && !list.length ? `${dest.name}沒有特別以「${foodWord}」出名,不過這些很值得吃:\n` : `來${dest.name}推薦你吃:\n`;
-      return { text: note + shown.slice(0, 6).map((f) => `・【${f.type}】${f.name}:${f.desc}`).join('\n'), action: { type: 'food', destId: dest.id } };
+      const shops = shopsOf(dest.id).filter((x) => !foodWord || x.dish === foodWord || shown.some((f) => f.name === x.dish));
+      const shopText = shops.length ? `\n\n📍 在地知名店家:\n${shops.slice(0, 5).map((x) => `・${x.name}(${x.area}):${x.note}`).join('\n')}` : '';
+      return { text: note + shown.slice(0, 6).map((f) => `・【${f.type}】${f.name}:${f.desc}`).join('\n') + shopText, action: { type: 'food', destId: dest.id } };
     }
-    const all = DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `・${f.name}(${d.name}):${f.desc}`));
+    const all = [
+      ...(foodWord === '早餐' ? DESTINATIONS.flatMap((d) => shopsOf(d.id, '早餐').map((x) => `・${x.name}(${d.name}${x.area}):${x.note}`)) : []),
+      ...DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `・${f.name}(${d.name}):${f.desc}`)),
+    ];
     if (foodWord && all.length) return { text: `各地的${foodWord}推薦:\n${all.slice(0, 8).join('\n')}` };
     const markets = DESTINATIONS.flatMap((d) => d.foods.filter((f) => f.type === '夜市').map((f) => `${f.name}(${d.name})`));
     return { text: `台灣必逛的夜市有:${markets.join('、')}。\n告訴我你在哪個城市(例如「台南有什麼好吃的」),我可以推薦當地小吃!` };

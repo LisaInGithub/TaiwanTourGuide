@@ -121,6 +121,9 @@ button { font: inherit; cursor: pointer; }
 .bubble.bot { background: var(--primary-soft); align-self: flex-start; border-bottom-left-radius: 4px; }
 .bubble.pending { opacity: 0.7; font-style: italic; }
 .chip:disabled { opacity: 0.5; }
+.chips.links { margin-top: 8px; gap: 6px; }
+.chips.links .chip { text-decoration: none; background: var(--card); font-style: normal; }
+a.btn { display: inline-block; text-decoration: none; }
 .bubble.me { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 .ask { display: flex; gap: 8px; margin-top: 10px; }
 .ask input { flex: 1; }
@@ -583,6 +586,76 @@ function getDestination(id) {
   return DESTINATIONS.find((d) => d.id === id);
 }
 
+// 在地知名店家(依長年口碑與媒體報導整理)。
+// 不寫死評分:評分會變動,畫面上一律附 Google 地圖連結,讓旅客看即時星等與評論。
+// 營業時間、是否搬遷請以 Google 地圖或店家公告為準。
+const SHOPS = {
+  taipei: [
+    { name: '阜杭豆漿', dish: '早餐', area: '華山市場 2 樓・善導寺站', note: '厚燒餅夾蛋、鹹豆漿,早上常排隊 30 分鐘以上。' },
+    { name: '林東芳牛肉麵', dish: '牛肉麵', area: '八德路', note: '半筋半肉加牛油辣椒是招牌吃法。' },
+    { name: '永康牛肉麵', dish: '牛肉麵', area: '永康街・東門站', note: '川味紅燒老店。' },
+    { name: '鼎泰豐 信義店', dish: '小籠包', area: '信義路・東門站', note: '十八摺小籠包創始店,可線上取號。' },
+    { name: '金峰滷肉飯', dish: '滷肉飯', area: '南昌路・中正紀念堂站', note: '平價排隊名店,翻桌快。' },
+    { name: '福州世祖胡椒餅', dish: '饒河街觀光夜市', area: '饒河夜市入口・松山站', note: '炭烤胡椒餅,現烤出爐要等。' },
+  ],
+  jiufen: [
+    { name: '阿柑姨芋圓', dish: '芋圓', area: '九份豎崎路旁', note: '座位可看山海景。' },
+    { name: '賴阿婆芋圓', dish: '芋圓', area: '九份基山街', note: '手工芋圓老店。' },
+  ],
+  tamsui: [
+    { name: '淡水文化阿給', dish: '阿給', area: '真理街', note: '淡水阿給老店之一。' },
+    { name: '三協成', dish: '伴手禮', area: '淡水中正路', note: '百年糕餅老店。' },
+  ],
+  keelung: [
+    { name: '李鵠餅店', dish: '伴手禮', area: '仁三路・廟口附近', note: '百年餅店,鳳梨酥、綠豆椪。' },
+  ],
+  taoyuan: [
+    { name: '黃日香豆干', dish: '大溪豆干', area: '大溪和平老街', note: '大溪豆干代表品牌。' },
+  ],
+  taichung: [
+    { name: '春水堂 四維創始店', dish: '珍珠奶茶', area: '四維街', note: '珍珠奶茶發源店之一。' },
+    { name: '宮原眼科', dish: '甜點', area: '中山路・台中車站旁', note: '冰淇淋與糕點禮盒,建築本身就是景點。' },
+    { name: '陳允寶泉', dish: '太陽餅', area: '台中市區多家門市', note: '百年太陽餅老店。' },
+  ],
+  sunmoonlake: [
+    { name: '玄光寺阿婆茶葉蛋', dish: '香菇茶葉蛋', area: '玄光寺碼頭', note: '搭船遊湖時順路買。' },
+  ],
+  chiayi: [
+    { name: '噴水火雞肉飯', dish: '火雞肉飯', area: '中正路・噴水圓環', note: '最知名的火雞肉飯老店。' },
+    { name: '劉里長雞肉飯', dish: '火雞肉飯', area: '公明路', note: '在地人常吃的排隊店。' },
+  ],
+  tainan: [
+    { name: '阿堂鹹粥', dish: '早餐', area: '西門路', note: '虱目魚鹹粥,清晨開賣、中午前收。' },
+    { name: '六千牛肉湯', dish: '牛肉湯', area: '海安路', note: '清晨開賣,賣完就收。' },
+    { name: '阿村第二代牛肉湯', dish: '牛肉湯', area: '保安路', note: '牛肉湯名店,營業到中午前後。' },
+    { name: '富盛號碗粿', dish: '碗粿', area: '西門路・赤崁樓附近', note: '碗粿老字號。' },
+    { name: '度小月擔仔麵 原始店', dish: '擔仔麵', area: '中正路', note: '擔仔麵起源老店。' },
+    { name: '周氏蝦捲', dish: '蝦捲', area: '安平路', note: '安平代表小吃。' },
+  ],
+  kaohsiung: [
+    { name: '興隆居', dish: '早餐', area: '六合二路', note: '湯包、燒餅早餐老店。' },
+    { name: '港園牛肉麵', dish: '牛肉麵', area: '大成街・鹽埕', note: '拌牛肉麵是招牌。' },
+    { name: '高雄婆婆冰', dish: '甜點', area: '七賢三路・鹽埕', note: '水果冰老店。' },
+  ],
+  kenting: [
+    { name: '阿伯綠豆饌', dish: '綠豆蒜', area: '恆春鎮', note: '恆春綠豆饌老店。' },
+  ],
+  hualien: [
+    { name: '戴記扁食', dish: '扁食', area: '中華路', note: '花蓮扁食代表店之一。' },
+    { name: '液香扁食', dish: '扁食', area: '信義街', note: '湯頭清甜的扁食老店。' },
+    { name: '曾記麻糬', dish: '花蓮麻糬', area: '花蓮市區多家門市', note: '麻糬伴手禮代表品牌。' },
+  ],
+  taitung: [
+    { name: '悟饕池上飯包文化故事館', dish: '池上便當', area: '池上鄉', note: '結合便當與米食文化展示。' },
+    { name: '全美行', dish: '池上便當', area: '池上鄉', note: '池上老字號飯包店。' },
+  ],
+};
+
+function shopsOf(destId, dish) {
+  const list = SHOPS[destId] ?? [];
+  return dish ? list.filter((x) => x.dish === dish) : list;
+}
+
 // 交通路線規劃:在路網上以 Dijkstra 演算法找出最佳路線。
 
 const TRANSFER_MINUTES = 15; // 每次轉乘預估的等車/步行時間
@@ -995,9 +1068,14 @@ function askGuide(question) {
       const shown = list.length ? list : dest.foods;
       if (!shown.length) return { text: `${dest.name}以自然景觀為主,比較少特色小吃,建議回到鄰近市區用餐。` };
       const note = foodWord && !list.length ? `${dest.name}沒有特別以「${foodWord}」出名,不過這些很值得吃:\n` : `來${dest.name}推薦你吃:\n`;
-      return { text: note + shown.slice(0, 6).map((f) => `・【${f.type}】${f.name}:${f.desc}`).join('\n'), action: { type: 'food', destId: dest.id } };
+      const shops = shopsOf(dest.id).filter((x) => !foodWord || x.dish === foodWord || shown.some((f) => f.name === x.dish));
+      const shopText = shops.length ? `\n\n📍 在地知名店家:\n${shops.slice(0, 5).map((x) => `・${x.name}(${x.area}):${x.note}`).join('\n')}` : '';
+      return { text: note + shown.slice(0, 6).map((f) => `・【${f.type}】${f.name}:${f.desc}`).join('\n') + shopText, action: { type: 'food', destId: dest.id } };
     }
-    const all = DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `・${f.name}(${d.name}):${f.desc}`));
+    const all = [
+      ...(foodWord === '早餐' ? DESTINATIONS.flatMap((d) => shopsOf(d.id, '早餐').map((x) => `・${x.name}(${d.name}${x.area}):${x.note}`)) : []),
+      ...DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `・${f.name}(${d.name}):${f.desc}`)),
+    ];
     if (foodWord && all.length) return { text: `各地的${foodWord}推薦:\n${all.slice(0, 8).join('\n')}` };
     const markets = DESTINATIONS.flatMap((d) => d.foods.filter((f) => f.type === '夜市').map((f) => `${f.name}(${d.name})`));
     return { text: `台灣必逛的夜市有:${markets.join('、')}。\n告訴我你在哪個城市(例如「台南有什麼好吃的」),我可以推薦當地小吃!` };
@@ -1047,7 +1125,7 @@ function resolvePlace(name) {
 const TOOLS = [
   {
     name: 'get_destination',
-    description: '查詢一個地點(城市/景區)的介紹、在地交通、所有景點與美食。回傳 JSON。',
+    description: '查詢一個地點(城市/景區)的介紹、在地交通、所有景點、美食類型,以及具體的在地知名店家(shops)。回傳 JSON。',
     inputSchema: { type: 'object', properties: { name: { type: 'string', description: '地點名稱,例如 台南、九份、日月潭' } }, required: ['name'] },
     execute({ name }) {
       const d = getDestination(resolvePlace(name));
@@ -1055,6 +1133,7 @@ const TOOLS = [
         name: d.name, region: d.region, intro: d.intro, localTransport: d.localTransport,
         attractions: d.attractions.map((a) => ({ name: a.name, hours: a.hours, tags: a.tags, desc: a.desc, tip: a.tip, nightOnly: a.evening })),
         foods: d.foods.map((f) => ({ name: f.name, type: f.type, desc: f.desc })),
+        shops: shopsOf(d.id).map((x) => ({ name: x.name, dish: x.dish, area: x.area, note: x.note })),
       };
     },
   },
@@ -1130,11 +1209,13 @@ const TOOLS = [
 const RULES = `你是「台灣小導遊」App 裡的導遊,用台灣繁體中文、親切口語地回答旅客。
 規則:
 1. 回答景點、美食、交通、行程時,先用工具查 App 資料,再根據結果回答;不要編造店名、班次或票價。
-2. App 資料沒有的內容,可以用你確定的一般常識補充,但要說明「建議出發前再確認」。
-3. 交通時間與票價一律說是「約」、「參考」。
-4. 問題不清楚(例如沒說從哪裡出發)時,先用最合理的假設回答(預設從台北出發),並在最後一句提醒可以告訴你出發地。
-5. 格式:純文字,不要用 Markdown 標題、粗體或表格;條列用「・」;整體 250 字以內,重點先講。
-6. 與旅遊無關的問題,簡短回應後把話題帶回台灣旅遊。
+2. 問美食時,優先推薦 get_destination 回傳的 shops(具體店名+在哪裡+特色),店名要一字不差照抄,App 會自動附上 Google 地圖連結。
+3. 你看不到 Google 評分:絕對不要寫出星等、評論數或「Google 4.5 分」之類的數字;需要時說「可以點下方地圖連結看最新評分」。
+4. App 資料沒有的內容,只補充你非常確定的知名店家或常識,並說明「建議出發前再確認營業時間」。
+5. 交通時間與票價一律說是「約」、「參考」。
+6. 問題不清楚(例如沒說從哪裡出發)時,先用最合理的假設回答(預設從台北出發),並在最後一句提醒可以告訴你出發地。
+7. 格式:純文字,不要用 Markdown 標題、粗體或表格;條列用「・」;整體 250 字以內,重點先講。
+8. 與旅遊無關的問題,簡短回應後把話題帶回台灣旅遊。
 App 收錄的地點:${DESTINATIONS.map((d) => d.name).join('、')}。
 興趣標籤:${INTERESTS.map((i) => i.key).join('、')}。
 今天日期:${new Date().toISOString().slice(0, 10)}。`;
@@ -1296,7 +1377,32 @@ function routeCard(r, from, to) {
   </div>`;
 }
 
-const SAMPLE_QUESTIONS = ['台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?', '下雨天台中去哪?'];
+// 回答裡提到的店家與景點 → Google 地圖連結(看即時評分與評論)
+const PLACE_INDEX = [
+  ...Object.entries(SHOPS).flatMap(([destId, list]) => list.map((x) => ({ name: x.name, query: `${x.name} ${getDestination(destId).name}` }))),
+  ...DESTINATIONS.flatMap((d) => d.attractions.map((a) => ({ name: a.name.replace(/(.*?)/g, ''), query: a.name.replace(/(.*?)/g, '') }))),
+].sort((x, y) => y.name.length - x.name.length);
+
+function placeLinks(text) {
+  const found = [];
+  let rest = text;
+  for (const p of PLACE_INDEX) {
+    const short = p.name.split('・')[0];
+    const key = rest.includes(p.name) ? p.name : short.length >= 3 && rest.includes(short) ? short : null;
+    if (!key) continue;
+    found.push(p);
+    rest = rest.split(key).join('');
+    if (found.length >= 8) break;
+  }
+  return found;
+}
+
+function linkChips(links) {
+  if (!links?.length) return '';
+  return `<div class="chips links">${links.map((p) => `<a class="chip small" href="${mapsUrl(p.query)}" target="_blank" rel="noopener">📍 ${esc(p.name)}</a>`).join('')}</div>`;
+}
+
+const SAMPLE_QUESTIONS = ['台南早餐吃什麼?', '台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?'];
 
 function aiBadge() {
   if (state.aiMode === 'ai') return '<span class="tag">✨ 由 Claude 回答</span>';
@@ -1310,7 +1416,7 @@ function renderHome() {
   return `
     <div class="card">
       <div class="row spread"><h2 style="margin:0">💬 問問小導遊</h2>${aiBadge()}</div>
-      <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}</div>`).join('')}</div>
+      <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}${linkChips(m.links)}</div>`).join('')}</div>
       <form class="ask" data-form="ask">
         <input type="text" name="q" id="ask-q" placeholder="例:花蓮三天怎麼玩?" autocomplete="off" ${state.chatBusy ? 'disabled' : ''} />
         <button class="btn" type="submit" ${state.chatBusy ? 'disabled' : ''}>${state.chatBusy ? '回答中…' : '送出'}</button>
@@ -1416,6 +1522,14 @@ function renderExplore() {
     </div>
     <h2>😋 好吃的</h2>
     ${foods || '<div class="empty">這裡以自然景觀為主,建議回到鄰近市區用餐。</div>'}
+    ${shopsOf(d.id).length ? `<h2>📍 在地名店</h2>
+    <p class="muted small">長年口碑老店。評分會變動,點「看 Google 評分」可看最新星等、評論與營業時間。</p>
+    <div class="grid">${shopsOf(d.id).map((x) => `<div class="card">
+      <h3>${esc(x.name)}</h3>
+      <div class="muted small">${esc(x.dish)} ・ ${esc(x.area)}</div>
+      <p class="small">${esc(x.note)}</p>
+      <a class="btn ghost small" href="${mapsUrl(`${x.name} ${d.name}`)}" target="_blank" rel="noopener">⭐ 看 Google 評分</a>
+    </div>`).join('')}</div>` : ''}
     <h2>🎡 好玩的</h2>
     <div class="grid">${d.attractions.map((a) => spotCard({ ...a, destName: d.name })).join('') || '<div class="empty">此地為交通轉運點</div>'}</div>`;
 }
@@ -1492,7 +1606,7 @@ async function sendQuestion(raw) {
   state.chat.push({ who: 'me', text: q });
 
   if (state.aiMode === 'offline') {
-    state.chat.push({ who: 'bot', text: local.text });
+    state.chat.push({ who: 'bot', text: local.text, links: placeLinks(local.text) });
     render();
     view.querySelector('#ask-q')?.focus();
     return;
@@ -1525,6 +1639,7 @@ async function sendQuestion(raw) {
   } else {
     bot.text = res.text;
   }
+  bot.links = placeLinks(bot.text);
   state.chatBusy = false;
   render();
   view.querySelector('#ask-q')?.focus();
