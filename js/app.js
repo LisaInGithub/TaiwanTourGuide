@@ -302,7 +302,11 @@ view.addEventListener('click', (e) => {
     Object.assign(state.route, { from: state.route.to, to: state.route.from, results: null });
     render();
   } else if (action === 'nearby') {
-    if (!navigator.geolocation) return alert('此裝置不支援定位');
+    if (!navigator.geolocation) {
+      state.nearby = '<div class="empty">此裝置不支援定位。</div>';
+      render();
+      return;
+    }
     el.disabled = true;
     el.textContent = '定位中…';
     navigator.geolocation.getCurrentPosition(

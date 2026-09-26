@@ -13,11 +13,16 @@
 涵蓋 20 個地點:台北、九份、淡水、平溪、基隆、宜蘭、桃園、新竹、台中、日月潭、嘉義、阿里山、台南、高雄、墾丁、花蓮、太魯閣、台東、澎湖、桃園機場。
 
 ## 開始使用
-需要 Node.js 18 以上,不用安裝任何套件:
+**最簡單:** 下載 `dist/taiwan-tour-guide.html`,直接用瀏覽器開啟(電腦、手機都可以)。
+
+**開發模式:** 需要 Node.js 18 以上,不用安裝任何套件:
 ```bash
 npm start      # 開啟 http://localhost:8080
 npm test       # 執行測試
+npm run build  # 重新產生單一檔案版 dist/taiwan-tour-guide.html
 ```
+
+> 注意:`localhost` 只在執行 `npm start` 的那台電腦上打得開。
 
 ## 專案結構
 ```

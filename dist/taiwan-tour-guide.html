@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+</head>
+<body>
+<title>台灣小導遊</title>
+<meta name="description" content="台灣小導遊:推薦景點、規劃交通、告訴你哪裡有好吃好玩的。" />
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iIzBmNzY2ZSIvPgogIDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTUwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMjQiLz4KICA8cGF0aCBkPSJNMjU2IDEyOCBMMjk2IDI1NiBMMjU2IDM4NCBMMjE2IDI1NiBaIiBmaWxsPSIjZmZmIi8+CiAgPHBhdGggZD0iTTI1NiAxMjggTDI5NiAyNTYgTDIxNiAyNTYgWiIgZmlsbD0iI2UyNTgzZSIvPgo8L3N2Zz4K" />
+<style>
+:root {
+  --bg: #f6f7f4;
+  --card: #ffffff;
+  --text: #1f2a2a;
+  --muted: #5d6b6b;
+  --line: #e2e6e2;
+  --primary: #0f766e;
+  --primary-soft: #d9f0ec;
+  --accent: #e2583e;
+  --chip: #eef2ef;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111716;
+    --card: #1a2221;
+    --text: #e7eeec;
+    --muted: #9aaaa7;
+    --line: #2b3533;
+    --primary: #3cbfae;
+    --primary-soft: #16332f;
+    --accent: #ff7b61;
+    --chip: #232d2b;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111716;
+  --card: #1a2221;
+  --text: #e7eeec;
+  --muted: #9aaaa7;
+  --line: #2b3533;
+  --primary: #3cbfae;
+  --primary-soft: #16332f;
+  --accent: #ff7b61;
+  --chip: #232d2b;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 12px 16px;
+  background: var(--primary); color: #fff;
+}
+.brand { font-weight: 700; font-size: 1.15rem; }
+.subtitle { opacity: 0.8; font-size: 0.8rem; }
+
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+
+h2 { font-size: 1.15rem; margin: 20px 0 10px; }
+h3 { font-size: 1rem; margin: 0 0 4px; }
+.muted { color: var(--muted); font-size: 0.88rem; }
+.small { font-size: 0.8rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.grid .card { margin: 0; }
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+
+label.field { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+select, input[type="text"], input[type="number"] {
+  width: 100%; font: inherit; color: var(--text);
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px;
+}
+
+button { font: inherit; cursor: pointer; }
+.btn {
+  border: 0; border-radius: 10px; padding: 10px 16px;
+  background: var(--primary); color: #fff; font-weight: 600;
+}
+.btn.ghost { background: var(--primary-soft); color: var(--primary); }
+.btn.small { padding: 6px 10px; font-size: 0.82rem; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.icon-btn { background: none; border: 0; font-size: 1.2rem; padding: 4px; line-height: 1; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line); background: var(--chip); color: var(--text);
+  border-radius: 999px; padding: 6px 12px; font-size: 0.88rem;
+}
+.chip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tag { display: inline-block; font-size: 0.72rem; padding: 1px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); margin: 2px 4px 0 0; }
+
+/* 問導遊 */
+.chat { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; padding: 4px 0; }
+.bubble { padding: 10px 12px; border-radius: 14px; white-space: pre-line; max-width: 92%; }
+.bubble.bot { background: var(--primary-soft); align-self: flex-start; border-bottom-left-radius: 4px; }
+.bubble.me { background: var(--primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.ask { display: flex; gap: 8px; margin-top: 10px; }
+.ask input { flex: 1; }
+
+/* 交通路線 */
+.route-opt { border-left: 4px solid var(--primary); }
+.legs { list-style: none; margin: 10px 0 0; padding: 0; }
+.leg { display: grid; grid-template-columns: 34px 1fr; gap: 8px; padding: 8px 0; border-top: 1px dashed var(--line); }
+.leg:first-child { border-top: 0; }
+.leg .mode { font-size: 1.4rem; text-align: center; }
+.transfer { font-size: 0.8rem; color: var(--accent); padding-left: 42px; }
+.stat { font-weight: 700; font-size: 1.05rem; }
+
+/* 行程 */
+.day h3 { color: var(--primary); }
+.timeline { list-style: none; margin: 8px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--primary-soft); }
+.timeline li { position: relative; padding: 6px 0 6px 10px; }
+.timeline li::before { content: ""; position: absolute; left: -21px; top: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+.timeline li.travel::before { background: var(--accent); }
+.timeline li.food::before { background: #f5a524; }
+
+.notice { font-size: 0.8rem; color: var(--muted); background: var(--chip); padding: 8px 12px; border-radius: 10px; margin-top: 12px; }
+.empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+a { color: var(--primary); }
+
+.tabbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 5;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--card); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar button {
+  background: none; border: 0; color: var(--muted);
+  padding: 8px 0 10px; font-size: 0.72rem; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.tabbar button span { font-size: 1.25rem; }
+.tabbar button.active { color: var(--primary); font-weight: 700; }
+
+</style>
+<header class="topbar">
+    <div class="brand">🧭 台灣小導遊</div>
+    <div class="subtitle">Taiwan Tour Guide</div>
+  </header>
+
+  <main id="view" aria-live="polite"></main>
+
+  <nav class="tabbar" aria-label="主選單">
+    <button data-tab="home" class="active"><span>🏠</span>導遊</button>
+    <button data-tab="plan"><span>🗓️</span>行程</button>
+    <button data-tab="route"><span>🚆</span>交通</button>
+    <button data-tab="explore"><span>🍜</span>吃喝玩樂</button>
+    <button data-tab="saved"><span>⭐</span>收藏</button>
+  </nav>
+<script type="module">
+// 台灣旅遊資料庫(原型版本)
+// 交通時間與票價為「參考值」,實際請以各營運單位公告為準。
+
+const INTERESTS = [
+  { key: '自然', label: '自然風景', icon: '🏞️' },
+  { key: '文化', label: '文化歷史', icon: '🏯' },
+  { key: '老街', label: '老街漫遊', icon: '🏮' },
+  { key: '美食', label: '夜市美食', icon: '🍜' },
+  { key: '溫泉', label: '泡溫泉', icon: '♨️' },
+  { key: '親子', label: '親子同樂', icon: '👨‍👩‍👧' },
+  { key: '購物', label: '逛街購物', icon: '🛍️' },
+  { key: '拍照', label: '拍照打卡', icon: '📸' },
+  { key: '海邊', label: '海邊島嶼', icon: '🏖️' },
+  { key: '登山', label: '登山步道', icon: '🥾' },
+  { key: '夜景', label: '夜景', icon: '🌃' },
+  { key: '室內', label: '雨天室內', icon: '☔' },
+];
+
+const REGIONS = ['北部', '中部', '南部', '東部', '離島'];
+
+const DESTINATIONS = [
+  {
+    id: 'taipei', name: '台北', region: '北部', aliases: ['臺北', '台北市', '北投', '陽明山'],
+    lat: 25.0478, lng: 121.5170,
+    intro: '首都台北融合現代都會與傳統廟宇,捷運四通八達,小吃與夜市密度全台最高。',
+    localTransport: '捷運+公車最方便,悠遊卡/一卡通可搭乘捷運、公車並租借 YouBike 微笑單車。',
+    attractions: [
+      { id: 'tp101', name: '台北101', tags: ['購物', '夜景', '拍照', '室內'], hours: 2, lat: 25.0339, lng: 121.5645, popular: true, desc: '台北地標,89 樓觀景台可俯瞰整個台北盆地。', tip: '傍晚上樓可同時看夕陽與夜景。' },
+      { id: 'npm', name: '國立故宮博物院', tags: ['文化', '室內', '親子'], hours: 3, lat: 25.1024, lng: 121.5485, popular: true, desc: '收藏翠玉白菜、肉形石等數十萬件中華文物。', tip: '建議上午前往避開團客,可租語音導覽。' },
+      { id: 'cks', name: '中正紀念堂', tags: ['文化', '拍照'], hours: 1, lat: 25.0346, lng: 121.5218, desc: '白牆藍瓦的紀念建築與廣場,整點有儀隊交接。' },
+      { id: 'xiangshan', name: '象山步道', tags: ['登山', '夜景', '自然', '拍照'], hours: 1.5, lat: 25.0273, lng: 121.5767, desc: '約 20–30 分鐘登頂,是拍攝台北101的經典角度。', tip: '日落前 40 分鐘出發最剛好。' },
+      { id: 'ximen', name: '西門町', tags: ['購物', '美食'], hours: 2, lat: 25.0422, lng: 121.5079, desc: '年輕人的潮流聚集地,電影院、潮牌與小吃林立。' },
+      { id: 'dadaocheng', name: '大稻埕・迪化街', tags: ['老街', '文化', '美食', '拍照'], hours: 2, lat: 25.0567, lng: 121.5100, desc: '百年街屋、南北貨與霞海城隍廟,傍晚可到碼頭看夕陽。' },
+      { id: 'beitou', name: '北投溫泉', tags: ['溫泉', '自然', '文化'], hours: 3, lat: 25.1367, lng: 121.5066, desc: '搭捷運就能到的溫泉鄉,地熱谷與溫泉博物館免費參觀。' },
+      { id: 'yangming', name: '陽明山國家公園', tags: ['自然', '登山'], hours: 4, lat: 25.1622, lng: 121.5447, desc: '火山地形、芒草與花季,春天海芋、秋天芒草最美。', tip: '山上天氣多變,記得帶外套與雨具。' },
+      { id: 'huashan', name: '華山1914文創園區', tags: ['文化', '室內', '拍照', '購物'], hours: 1.5, lat: 25.0441, lng: 121.5294, desc: '老酒廠改建的文創園區,常有展覽與市集。' },
+    ],
+    foods: [
+      { name: '牛肉麵', type: '小吃', desc: '紅燒或清燉,台北名店眾多,是必吃代表。' },
+      { name: '小籠包', type: '小吃', desc: '薄皮多汁,信義區與永康街都有知名老店。' },
+      { name: '滷肉飯', type: '小吃', desc: '肥瘦適中的滷肉淋在白飯上,平價又道地。' },
+      { name: '士林夜市', type: '夜市', desc: '台北最大夜市,大雞排、生煎包、各式遊戲攤。' },
+      { name: '饒河街觀光夜市', type: '夜市', desc: '入口的福州胡椒餅常大排長龍。' },
+      { name: '寧夏夜市', type: '夜市', desc: '以傳統台灣小吃為主,蚵仔煎、滷肉飯、芋丸。' },
+      { name: '珍珠奶茶', type: '飲品', desc: '台灣國民飲料,可調整甜度冰塊。' },
+    ],
+  },
+  {
+    id: 'jiufen', name: '九份', region: '北部', aliases: ['九份老街', '金瓜石', '瑞芳'],
+    lat: 25.1097, lng: 121.8445,
+    intro: '依山而建的山城,紅燈籠、石階與海景交織出懷舊氛圍。',
+    localTransport: '老街步行為主,前往金瓜石可搭 788、1062 等公車。',
+    attractions: [
+      { id: 'jiufen-st', name: '九份老街', tags: ['老街', '美食', '拍照', '夜景'], hours: 2.5, lat: 25.1097, lng: 121.8445, popular: true, desc: '豎崎路的紅燈籠與茶樓是招牌景色。', tip: '傍晚點燈最美,但假日人潮多,建議平日前往。' },
+      { id: 'gold-museum', name: '黃金博物館(金瓜石)', tags: ['文化', '親子', '自然'], hours: 2, lat: 25.1070, lng: 121.8580, desc: '可觸摸 220 公斤大金磚,並參觀日式宿舍群。' },
+      { id: 'teapot', name: '無耳茶壺山步道', tags: ['登山', '自然'], hours: 2, lat: 25.1050, lng: 121.8650, desc: '可遠眺陰陽海與十三層遺址。' },
+    ],
+    foods: [
+      { name: '芋圓', type: '甜點', desc: 'Q 彈芋圓配上刨冰或熱湯,九份必吃。' },
+      { name: '草仔粿', type: '小吃', desc: '艾草外皮包菜脯或紅豆餡。' },
+      { name: '魚丸湯', type: '小吃', desc: '老街上常見的在地小吃。' },
+    ],
+  },
+  {
+    id: 'tamsui', name: '淡水', region: '北部', aliases: ['淡水老街', '漁人碼頭'],
+    lat: 25.1693, lng: 121.4410,
+    intro: '河口小鎮,老街、古蹟與全台知名的夕陽景色。',
+    localTransport: '捷運淡水站下車步行,前往漁人碼頭可搭公車或渡輪。',
+    attractions: [
+      { id: 'tamsui-st', name: '淡水老街', tags: ['老街', '美食'], hours: 1.5, lat: 25.1693, lng: 121.4410, popular: true, desc: '河岸步道搭配老街小吃。' },
+      { id: 'fort', name: '紅毛城', tags: ['文化', '拍照'], hours: 1, lat: 25.1753, lng: 121.4331, desc: '17 世紀西班牙人興建,後為英國領事館。' },
+      { id: 'fisherman', name: '漁人碼頭・情人橋', tags: ['海邊', '夜景', '拍照'], hours: 1.5, lat: 25.1834, lng: 121.4105, desc: '看夕陽的最佳地點。' },
+    ],
+    foods: [
+      { name: '阿給', type: '小吃', desc: '油豆腐塞冬粉、封魚漿,淋上甜辣醬。' },
+      { name: '鐵蛋', type: '小吃', desc: '反覆滷製風乾,口感Q韌。' },
+      { name: '魚酥', type: '伴手禮', desc: '酥脆的魚漿零食。' },
+    ],
+  },
+  {
+    id: 'pingxi', name: '平溪', region: '北部', aliases: ['十分', '菁桐', '平溪線'],
+    lat: 25.0412, lng: 121.7753,
+    intro: '鐵道小鎮,在鐵軌上放天燈是台灣代表體驗。',
+    localTransport: '搭台鐵平溪線串聯十分、平溪、菁桐,可購買一日週遊券。',
+    attractions: [
+      { id: 'shifen', name: '十分老街放天燈', tags: ['老街', '拍照', '親子'], hours: 1.5, lat: 25.0412, lng: 121.7753, popular: true, desc: '寫下願望放天燈,火車就從身旁駛過。' },
+      { id: 'shifen-falls', name: '十分瀑布', tags: ['自然', '拍照'], hours: 1, lat: 25.0485, lng: 121.7875, desc: '有「台灣尼加拉瀑布」之稱。' },
+      { id: 'jingtong', name: '菁桐車站', tags: ['老街', '文化'], hours: 1, lat: 25.0240, lng: 121.7236, desc: '日式木造車站與掛滿許願竹筒的老街。' },
+    ],
+    foods: [
+      { name: '雞翅包飯', type: '小吃', desc: '去骨雞翅包入炒飯烤製。' },
+      { name: '花生冰淇淋捲', type: '甜點', desc: '花生粉、冰淇淋與香菜包在潤餅皮裡。' },
+    ],
+  },
+  {
+    id: 'keelung', name: '基隆', region: '北部', aliases: ['基隆市', '廟口'],
+    lat: 25.1283, lng: 121.7434,
+    intro: '雨港基隆,以廟口夜市和海港風情聞名。',
+    localTransport: '市區公車為主,和平島、正濱漁港車程約 15–20 分鐘。',
+    attractions: [
+      { id: 'miaokou', evening: true, name: '基隆廟口夜市', tags: ['美食', '夜景'], hours: 1.5, lat: 25.1283, lng: 121.7434, popular: true, desc: '以奠濟宮為中心的百年夜市,黃色燈籠一字排開。' },
+      { id: 'heping', name: '和平島地質公園', tags: ['自然', '海邊', '親子'], hours: 2, lat: 25.1602, lng: 121.7629, desc: '奇特的海蝕地形與海水游泳池。' },
+      { id: 'zhengbin', name: '正濱漁港彩色屋', tags: ['拍照', '海邊'], hours: 1, lat: 25.1497, lng: 121.7747, desc: '繽紛的彩色建築倒映在港灣中。' },
+    ],
+    foods: [
+      { name: '鼎邊趖', type: '小吃', desc: '米漿沿鍋邊燙熟,配上羹湯。' },
+      { name: '營養三明治', type: '小吃', desc: '炸麵包夾滷蛋、火腿、番茄與美乃滋。' },
+      { name: '泡泡冰', type: '甜點', desc: '手工反覆攪拌出綿密口感的冰品。' },
+    ],
+  },
+  {
+    id: 'yilan', name: '宜蘭', region: '北部', aliases: ['礁溪', '羅東', '宜蘭縣'],
+    lat: 24.8270, lng: 121.7735,
+    intro: '雪山隧道一穿就到,溫泉、田園與傳統藝術兼具。',
+    localTransport: '礁溪、宜蘭、羅東間搭台鐵最快,景點間可搭台灣好行或租車。',
+    attractions: [
+      { id: 'jiaoxi', name: '礁溪溫泉', tags: ['溫泉', '自然'], hours: 2.5, lat: 24.8270, lng: 121.7735, popular: true, desc: '平地溫泉,車站旁就有免費泡腳池。' },
+      { id: 'ncfta', name: '國立傳統藝術中心', tags: ['文化', '親子', '老街', '拍照'], hours: 3, lat: 24.6842, lng: 121.8230, desc: '仿古街道、傳統工藝與戲曲表演。' },
+      { id: 'lanyang', name: '蘭陽博物館', tags: ['文化', '室內', '親子'], hours: 1.5, lat: 24.8687, lng: 121.8320, desc: '單面山造型建築,介紹宜蘭山海文化。' },
+      { id: 'luodong', evening: true, name: '羅東夜市', tags: ['美食'], hours: 1.5, lat: 24.6772, lng: 121.7697, desc: '宜蘭最熱鬧的夜市。' },
+    ],
+    foods: [
+      { name: '三星蔥油餅', type: '小吃', desc: '滿滿的三星蔥,外酥內香。' },
+      { name: '卜肉', type: '小吃', desc: '裹粉油炸的豬肉條,宜蘭特色。' },
+      { name: '牛舌餅', type: '伴手禮', desc: '薄脆的長條餅,宜蘭經典伴手禮。' },
+    ],
+  },
+  {
+    id: 'taoyuan', name: '桃園', region: '北部', aliases: ['桃園市', '大溪'],
+    lat: 25.0130, lng: 121.2150,
+    intro: '國門所在地,有大溪老街與大型水族館。',
+    localTransport: '高鐵桃園站與機場捷運相連,前往大溪建議搭客運或計程車。',
+    attractions: [
+      { id: 'daxi', name: '大溪老街', tags: ['老街', '文化', '美食'], hours: 2, lat: 24.8835, lng: 121.2870, desc: '巴洛克式立面街屋,以豆干聞名。' },
+      { id: 'xpark', name: 'Xpark 水族館', tags: ['親子', '室內'], hours: 2.5, lat: 24.9895, lng: 121.2156, popular: true, desc: '高鐵桃園站旁的都會型水生公園。' },
+    ],
+    foods: [
+      { name: '大溪豆干', type: '伴手禮', desc: '滷味豆干香Q入味。' },
+      { name: '客家菜', type: '餐廳', desc: '客庄特色的鹹香料理。' },
+    ],
+  },
+  {
+    id: 'airport', name: '桃園機場', region: '北部', aliases: ['機場', '桃機', '桃園國際機場'],
+    lat: 25.0797, lng: 121.2342,
+    intro: '台灣主要國際門戶,可搭機場捷運進入台北或轉乘高鐵。',
+    localTransport: '機場捷運直達車到台北車站約 35–40 分鐘。',
+    attractions: [],
+    foods: [],
+  },
+  {
+    id: 'hsinchu', name: '新竹', region: '北部', aliases: ['新竹市', '內灣', '竹北'],
+    lat: 24.8045, lng: 120.9656,
+    intro: '風城新竹,城隍廟小吃與客家山城內灣。',
+    localTransport: '高鐵新竹站在竹北,可轉台鐵六家線進市區。',
+    attractions: [
+      { id: 'chenghuang', name: '新竹都城隍廟', tags: ['文化', '美食'], hours: 1.5, lat: 24.8045, lng: 120.9656, popular: true, desc: '香火鼎盛的古廟,周邊就是小吃聚集地。' },
+      { id: 'neiwan', name: '內灣老街', tags: ['老街', '自然', '美食'], hours: 2.5, lat: 24.7053, lng: 121.1830, desc: '客家山城,可搭台鐵內灣線前往。' },
+      { id: 'nanliao', name: '南寮漁港', tags: ['海邊', '親子'], hours: 1.5, lat: 24.8486, lng: 120.9265, desc: '海風、風箏與自行車道。' },
+    ],
+    foods: [
+      { name: '新竹米粉', type: '小吃', desc: '風乾的細米粉,炒或煮湯都好吃。' },
+      { name: '貢丸湯', type: '小吃', desc: '彈牙豬肉貢丸,新竹招牌。' },
+      { name: '客家粄條', type: '小吃', desc: '內灣、北埔一帶的經典客家味。' },
+    ],
+  },
+  {
+    id: 'taichung', name: '台中', region: '中部', aliases: ['臺中', '台中市', '逢甲'],
+    lat: 24.1477, lng: 120.6736,
+    intro: '氣候宜人的文化城,夜市、文青景點與珍奶發源地之一。',
+    localTransport: '高鐵台中站位於烏日,可轉台鐵、捷運綠線或客運進市區(約 15–30 分鐘)。',
+    attractions: [
+      { id: 'gaomei', name: '高美濕地', tags: ['自然', '拍照', '海邊'], hours: 2, lat: 24.3120, lng: 120.5497, popular: true, desc: '風車與夕陽倒影,台中最美的黃昏。', tip: '查好潮汐與日落時間再出發。' },
+      { id: 'opera', name: '台中國家歌劇院', tags: ['文化', '室內', '拍照'], hours: 1.5, lat: 24.1627, lng: 120.6405, desc: '伊東豊雄設計的曲牆建築。' },
+      { id: 'fengjia', evening: true, name: '逢甲夜市', tags: ['美食', '購物'], hours: 2, lat: 24.1747, lng: 120.6461, popular: true, desc: '全台最大觀光夜市之一,創意小吃層出不窮。' },
+      { id: 'miyahara', name: '宮原眼科・審計新村', tags: ['文化', '拍照', '購物'], hours: 1.5, lat: 24.1378, lng: 120.6835, desc: '日治建築改建的甜點名店與文創聚落。' },
+      { id: 'nmns', name: '國立自然科學博物館', tags: ['親子', '室內', '文化'], hours: 3, lat: 24.1570, lng: 120.6660, desc: '恐龍廳、太空劇場,親子首選。' },
+      { id: 'rainbow', name: '彩虹眷村', tags: ['拍照', '文化'], hours: 1, lat: 24.1339, lng: 120.6099, desc: '色彩繽紛的彩繪眷村。' },
+    ],
+    foods: [
+      { name: '太陽餅', type: '伴手禮', desc: '麥芽餡的酥皮餅,台中代表伴手禮。' },
+      { name: '珍珠奶茶', type: '飲品', desc: '台中是珍奶發源地之一,各大手搖店林立。' },
+      { name: '大麵羹', type: '小吃', desc: '加了鹼的粗麵條煮成的台中古早味。' },
+      { name: '一中街商圈', type: '夜市', desc: '學生聚集的小吃街,價格實惠。' },
+    ],
+  },
+  {
+    id: 'sunmoonlake', name: '日月潭', region: '中部', aliases: ['南投', '伊達邵', '九族'],
+    lat: 23.8570, lng: 120.9160,
+    intro: '台灣最大的天然湖泊,山水相映、四季皆宜。',
+    localTransport: '環湖可搭遊艇、環湖公車或騎自行車,另有纜車通往九族文化村。',
+    attractions: [
+      { id: 'sml-bike', name: '日月潭環湖自行車道', tags: ['自然', '拍照'], hours: 2.5, lat: 23.8570, lng: 120.9160, popular: true, desc: '曾被評為全球最美自行車道之一。' },
+      { id: 'sml-boat', name: '日月潭遊湖船', tags: ['自然', '親子'], hours: 2, lat: 23.8660, lng: 120.9110, desc: '水社、玄光寺、伊達邵三碼頭跳島。' },
+      { id: 'formosan', name: '九族文化村', tags: ['親子', '文化'], hours: 4, lat: 23.8710, lng: 120.9500, desc: '遊樂設施結合原住民文化展演。' },
+      { id: 'ita-thao', name: '伊達邵商圈', tags: ['美食', '文化'], hours: 1.5, lat: 23.8520, lng: 120.9340, desc: '邵族部落,小吃與手工藝品。' },
+    ],
+    foods: [
+      { name: '日月潭紅茶(台茶18號)', type: '飲品', desc: '帶有天然肉桂與薄荷香的紅玉紅茶。' },
+      { name: '香菇茶葉蛋', type: '小吃', desc: '玄光寺旁的人氣茶葉蛋。' },
+      { name: '總統魚', type: '餐廳', desc: '日月潭特有的曲腰魚料理。' },
+    ],
+  },
+  {
+    id: 'chiayi', name: '嘉義', region: '南部', aliases: ['嘉義市', '故宮南院'],
+    lat: 23.4800, lng: 120.4490,
+    intro: '前往阿里山的門戶,也是火雞肉飯的故鄉。',
+    localTransport: '高鐵嘉義站在太保,可轉 BRT 進市區(約 30 分鐘)。',
+    attractions: [
+      { id: 'wenhua', evening: true, name: '文化路夜市', tags: ['美食'], hours: 1.5, lat: 23.4800, lng: 120.4490, popular: true, desc: '嘉義最熱鬧的小吃街。' },
+      { id: 'hinoki', name: '檜意森活村', tags: ['文化', '拍照'], hours: 1.5, lat: 23.4855, lng: 120.4530, desc: '日式檜木宿舍群。' },
+      { id: 'npm-south', name: '故宮南院', tags: ['文化', '室內', '親子'], hours: 2.5, lat: 23.4700, lng: 120.2890, desc: '以亞洲文化為主題的故宮分院。' },
+    ],
+    foods: [
+      { name: '火雞肉飯', type: '小吃', desc: '嘉義靈魂美食,雞油香氣十足。' },
+      { name: '方塊酥', type: '伴手禮', desc: '層層酥脆的經典伴手禮。' },
+    ],
+  },
+  {
+    id: 'alishan', name: '阿里山', region: '南部', aliases: ['阿里山森林', '奮起湖', '祝山'],
+    lat: 23.5100, lng: 120.8030,
+    intro: '日出、雲海、森林鐵路與神木,台灣最具代表性的高山景點。',
+    localTransport: '園區內可搭森林鐵路支線(祝山線、神木線),也可步行。',
+    attractions: [
+      { id: 'alishan-forest', name: '阿里山森林遊樂區', tags: ['自然', '登山', '拍照'], hours: 4, lat: 23.5100, lng: 120.8030, popular: true, desc: '巨木群棧道、姊妹潭與櫻花季。' },
+      { id: 'zhushan', name: '祝山觀日出', tags: ['自然', '拍照'], hours: 2, lat: 23.5100, lng: 120.8130, desc: '清晨搭祝山線小火車看日出雲海。', tip: '日出時間每天不同,前一晚確認火車發車時刻。' },
+      { id: 'fenqihu', name: '奮起湖老街', tags: ['老街', '美食'], hours: 1.5, lat: 23.5050, lng: 120.6960, desc: '森林鐵路中途站,以鐵路便當聞名。' },
+    ],
+    foods: [
+      { name: '奮起湖便當', type: '小吃', desc: '鐵盒裝的古早味鐵路便當。' },
+      { name: '阿里山高山茶', type: '飲品', desc: '高海拔烏龍茶,香氣清雅。' },
+    ],
+  },
+  {
+    id: 'tainan', name: '台南', region: '南部', aliases: ['臺南', '台南市', '安平'],
+    lat: 22.9975, lng: 120.2025,
+    intro: '台灣最古老的城市,古蹟密度最高,也是公認的小吃之都。',
+    localTransport: '高鐵台南站可轉沙崙線到台南火車站;市區景點建議租機車、YouBike 或叫車。',
+    attractions: [
+      { id: 'chihkan', name: '赤崁樓', tags: ['文化', '拍照'], hours: 1, lat: 22.9975, lng: 120.2025, popular: true, desc: '荷蘭時期建造的普羅民遮城遺址。' },
+      { id: 'anping', name: '安平古堡・安平老街', tags: ['文化', '老街', '美食'], hours: 2.5, lat: 23.0015, lng: 120.1605, popular: true, desc: '台灣最早的城堡與周邊小吃老街。' },
+      { id: 'shennong', evening: true, name: '神農街', tags: ['老街', '拍照', '夜景'], hours: 1, lat: 22.9975, lng: 120.1965, desc: '夜晚點燈的老屋街道,文青小店林立。' },
+      { id: 'chimei', name: '奇美博物館', tags: ['文化', '室內', '親子', '拍照'], hours: 3, lat: 22.9346, lng: 120.2260, desc: '西洋藝術、樂器與兵器收藏豐富,建築宛如宮殿。' },
+      { id: 'sicao', name: '四草綠色隧道', tags: ['自然', '拍照'], hours: 1.5, lat: 23.0200, lng: 120.1370, desc: '搭竹筏穿越紅樹林隧道。' },
+      { id: 'garden-nm', evening: true, name: '花園夜市', tags: ['美食'], hours: 1.5, lat: 23.0110, lng: 120.2000, desc: '台南最大夜市。', tip: '只在週四、六、日營業。' },
+    ],
+    foods: [
+      { name: '牛肉湯', type: '小吃', desc: '溫體牛肉以熱湯沖熟,台南人的早餐。' },
+      { name: '擔仔麵', type: '小吃', desc: '小碗肉燥麵加鮮蝦,百年老味道。' },
+      { name: '碗粿', type: '小吃', desc: '米漿蒸製,淋上醬汁。' },
+      { name: '鱔魚意麵', type: '小吃', desc: '大火快炒,帶點甜酸。' },
+      { name: '蝦捲', type: '小吃', desc: '安平名物,外酥內鮮。' },
+    ],
+  },
+  {
+    id: 'kaohsiung', name: '高雄', region: '南部', aliases: ['高雄市', '左營', '旗津', '駁二'],
+    lat: 22.6273, lng: 120.3014,
+    intro: '陽光港都,藝術特區、海港與廟宇景觀兼具。',
+    localTransport: '高鐵左營站連接高雄捷運,輕軌環繞亞洲新灣區,旗津可搭渡輪。',
+    attractions: [
+      { id: 'pier2', name: '駁二藝術特區', tags: ['文化', '拍照', '購物'], hours: 2, lat: 22.6200, lng: 120.2820, popular: true, desc: '港邊倉庫改建的藝術園區。' },
+      { id: 'cijin', name: '旗津', tags: ['海邊', '美食', '親子'], hours: 3, lat: 22.6120, lng: 120.2680, desc: '搭渡輪上島,騎車吃海鮮看夕陽。' },
+      { id: 'lotus', name: '蓮池潭龍虎塔', tags: ['文化', '拍照'], hours: 1, lat: 22.6810, lng: 120.2940, desc: '從龍口入、虎口出,象徵趨吉避凶。' },
+      { id: 'fgs', name: '佛陀紀念館', tags: ['文化', '拍照'], hours: 2.5, lat: 22.7560, lng: 120.4430, desc: '宏偉的佛教文化園區。' },
+      { id: 'ruifeng', evening: true, name: '瑞豐夜市', tags: ['美食'], hours: 1.5, lat: 22.6660, lng: 120.3000, desc: '在地人最愛的夜市。' },
+      { id: 'formosa', name: '美麗島站光之穹頂', tags: ['室內', '拍照'], hours: 0.5, lat: 22.6310, lng: 120.3020, desc: '世界最美捷運站之一。' },
+    ],
+    foods: [
+      { name: '海鮮', type: '餐廳', desc: '旗津海產店現撈現煮。' },
+      { name: '木瓜牛奶', type: '飲品', desc: '高雄經典飲品。' },
+      { name: '六合夜市', type: '夜市', desc: '觀光客最熟悉的高雄夜市。' },
+    ],
+  },
+  {
+    id: 'kenting', name: '墾丁', region: '南部', aliases: ['恆春', '屏東', '墾丁大街'],
+    lat: 21.9460, lng: 120.7960,
+    intro: '台灣最南端的熱帶海洋國家公園,四季如夏。',
+    localTransport: '區內可搭墾丁街車,但班次少,多數旅客租機車或電動車。',
+    attractions: [
+      { id: 'kt-street', evening: true, name: '墾丁大街', tags: ['美食', '購物', '夜景'], hours: 1.5, lat: 21.9460, lng: 120.7960, popular: true, desc: '入夜後變身熱鬧的夜市街。' },
+      { id: 'eluanbi', name: '鵝鑾鼻燈塔', tags: ['海邊', '拍照', '文化'], hours: 1.5, lat: 21.9020, lng: 120.8530, desc: '台灣八景之一的白色燈塔。' },
+      { id: 'nmmba', name: '國立海洋生物博物館', tags: ['親子', '室內'], hours: 3, lat: 22.0460, lng: 120.6980, desc: '海底隧道與白鯨,親子必訪。' },
+      { id: 'longpan', name: '龍磐公園', tags: ['自然', '拍照', '海邊'], hours: 1, lat: 21.9230, lng: 120.8580, desc: '珊瑚礁台地與太平洋海景,夜晚可觀星。' },
+      { id: 'baisha', name: '白沙灣', tags: ['海邊', '親子'], hours: 2, lat: 21.9380, lng: 120.7120, desc: '細白沙灘,適合玩水。' },
+    ],
+    foods: [
+      { name: '綠豆蒜', type: '甜點', desc: '恆春特色甜湯,去殼綠豆熬煮。' },
+      { name: '洋蔥料理', type: '小吃', desc: '恆春半島盛產洋蔥,春季最甜。' },
+      { name: '海鮮', type: '餐廳', desc: '後壁湖漁港生魚片最新鮮。' },
+    ],
+  },
+  {
+    id: 'hualien', name: '花蓮', region: '東部', aliases: ['花蓮市', '七星潭'],
+    lat: 23.9920, lng: 121.6010,
+    intro: '背山面海的後山,太平洋與中央山脈就在眼前。',
+    localTransport: '市區不大可騎 YouBike;前往郊區景點建議包車、租車或搭台灣好行。',
+    attractions: [
+      { id: 'qixingtan', name: '七星潭', tags: ['海邊', '自然', '拍照'], hours: 1.5, lat: 24.0290, lng: 121.6290, popular: true, desc: '月牙形礫石海灣,看日出的好地點。' },
+      { id: 'dongdamen', evening: true, name: '東大門夜市', tags: ['美食'], hours: 1.5, lat: 23.9750, lng: 121.6100, desc: '有原住民一條街的大型夜市。' },
+      { id: 'qingshui', name: '清水斷崖', tags: ['自然', '拍照'], hours: 1, lat: 24.2140, lng: 121.6600, desc: '千米斷崖直落太平洋。', tip: '出發前請確認蘇花公路與觀景台開放狀況。' },
+    ],
+    foods: [
+      { name: '扁食', type: '小吃', desc: '皮薄餡多的花蓮餛飩。' },
+      { name: '炸彈蔥油餅', type: '小吃', desc: '包入半熟蛋的酥炸蔥油餅。' },
+      { name: '花蓮麻糬', type: '伴手禮', desc: '軟Q多口味,經典伴手禮。' },
+    ],
+  },
+  {
+    id: 'taroko', name: '太魯閣', region: '東部', aliases: ['太魯閣國家公園', '天祥', '燕子口'],
+    lat: 24.1590, lng: 121.6220,
+    intro: '大理石峽谷景觀舉世聞名。',
+    localTransport: '可搭台灣好行太魯閣線或包車。',
+    attractions: [
+      { id: 'taroko-np', name: '太魯閣國家公園(開放路段)', tags: ['自然', '登山', '拍照'], hours: 4, lat: 24.1590, lng: 121.6220, popular: true, desc: '峽谷、隧道與溪流交織的壯麗地景。', tip: '震後部分步道與路段仍在修復,出發前務必查詢國家公園管理處公告。' },
+    ],
+    foods: [],
+  },
+  {
+    id: 'taitung', name: '台東', region: '東部', aliases: ['臺東', '池上', '鹿野', '知本'],
+    lat: 22.7540, lng: 121.1510,
+    intro: '慢活的後山淨土,稻田、熱氣球與溫泉。',
+    localTransport: '景點分散,建議租車或參加一日遊;池上可租自行車。',
+    attractions: [
+      { id: 'mrbrown', name: '池上伯朗大道', tags: ['自然', '拍照'], hours: 2, lat: 23.0980, lng: 121.2210, popular: true, desc: '一望無際的稻田,騎單車最愜意。' },
+      { id: 'luye', name: '鹿野高台', tags: ['自然', '親子', '拍照'], hours: 1.5, lat: 22.9180, lng: 121.1360, desc: '夏季熱氣球嘉年華的舉辦地。' },
+      { id: 'sanxiantai', name: '三仙台', tags: ['海邊', '自然', '拍照'], hours: 1.5, lat: 23.1240, lng: 121.4130, desc: '八拱跨海步橋,看日出勝地。' },
+      { id: 'tiehua', evening: true, name: '鐵花村音樂聚落', tags: ['文化', '夜景'], hours: 1.5, lat: 22.7540, lng: 121.1510, desc: '夜晚熱氣球燈與現場音樂。' },
+      { id: 'zhiben', name: '知本溫泉', tags: ['溫泉'], hours: 2.5, lat: 22.6960, lng: 121.0080, desc: '東部著名的碳酸氫鈉泉。' },
+    ],
+    foods: [
+      { name: '池上便當', type: '小吃', desc: '池上米的香Q一吃就懂。' },
+      { name: '釋迦', type: '水果', desc: '台東名產,秋冬盛產。' },
+      { name: '原住民風味餐', type: '餐廳', desc: '野菜、竹筒飯與山豬肉。' },
+    ],
+  },
+  {
+    id: 'penghu', name: '澎湖', region: '離島', noTransit: true, aliases: ['馬公', '七美', '吉貝'],
+    lat: 23.5655, lng: 119.5793,
+    intro: '玄武岩與碧海藍天的群島,夏季花火節聞名。',
+    localTransport: '主要島嶼可租機車或參加一日遊,跳島需搭船。',
+    attractions: [
+      { id: 'twinheart', name: '七美雙心石滬', tags: ['海邊', '拍照', '文化'], hours: 3, lat: 23.2050, lng: 119.4340, popular: true, desc: '最浪漫的石滬,需搭船前往七美。' },
+      { id: 'bridge', name: '澎湖跨海大橋', tags: ['海邊', '拍照'], hours: 1, lat: 23.6260, lng: 119.5540, desc: '連接白沙與西嶼的跨海大橋。' },
+      { id: 'jibei', name: '吉貝沙尾', tags: ['海邊', '親子'], hours: 3, lat: 23.7400, lng: 119.6030, desc: '白色沙嘴與水上活動。' },
+    ],
+    foods: [
+      { name: '仙人掌冰', type: '甜點', desc: '桃紅色的酸甜冰品。' },
+      { name: '黑糖糕', type: '伴手禮', desc: '鬆軟Q彈的澎湖名產。' },
+      { name: '海鮮', type: '餐廳', desc: '小管、海膽、澎湖絲瓜。' },
+    ],
+  },
+];
+
+// 交通路網(雙向)。min = 分鐘,fare = 新台幣(參考值)。
+// line 相同的連續路段會合併為同一段(例如搭同一班高鐵經過多站)。
+// 地點標記 noTransit 時(如離島),只能當起點或終點,不會被當成轉乘點。
+const EDGES = [
+  // 高鐵
+  { a: 'taipei', b: 'taoyuan', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 20, fare: 160 },
+  { a: 'taoyuan', b: 'hsinchu', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 12, fare: 130 },
+  { a: 'hsinchu', b: 'taichung', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 22, fare: 410 },
+  { a: 'taichung', b: 'chiayi', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 28, fare: 380 },
+  { a: 'chiayi', b: 'tainan', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 15, fare: 270 },
+  { a: 'tainan', b: 'kaohsiung', mode: 'hsr', line: 'HSR', name: '台灣高鐵', min: 13, fare: 140 },
+  // 台鐵
+  { a: 'taipei', b: 'keelung', mode: 'tra', line: 'TRA-N', name: '台鐵區間車', min: 45, fare: 41 },
+  { a: 'taipei', b: 'hsinchu', mode: 'tra', line: 'TRA-W', name: '台鐵自強號', min: 70, fare: 177 },
+  { a: 'hsinchu', b: 'taichung', mode: 'tra', line: 'TRA-W', name: '台鐵自強號', min: 80, fare: 198 },
+  { a: 'taichung', b: 'chiayi', mode: 'tra', line: 'TRA-W', name: '台鐵自強號', min: 80, fare: 222 },
+  { a: 'chiayi', b: 'tainan', mode: 'tra', line: 'TRA-W', name: '台鐵自強號', min: 55, fare: 145 },
+  { a: 'tainan', b: 'kaohsiung', mode: 'tra', line: 'TRA-W', name: '台鐵自強號', min: 35, fare: 106 },
+  { a: 'taipei', b: 'pingxi', mode: 'tra', line: 'TRA-PX', name: '台鐵(瑞芳轉平溪線)', min: 90, fare: 80, tip: '瑞芳站轉乘平溪線,可買平溪線一日週遊券。' },
+  { a: 'taipei', b: 'yilan', mode: 'tra', line: 'TRA-E', name: '台鐵自強號', min: 75, fare: 199 },
+  { a: 'yilan', b: 'hualien', mode: 'tra', line: 'TRA-E', name: '台鐵自強號', min: 85, fare: 239 },
+  { a: 'taipei', b: 'hualien', mode: 'tra', line: 'TRA-E', name: '台鐵普悠瑪/太魯閣號', min: 130, fare: 440, tip: '東部幹線熱門,假日車票常需提前 28 天搶訂。' },
+  { a: 'hualien', b: 'taitung', mode: 'tra', line: 'TRA-E', name: '台鐵自強號', min: 120, fare: 343 },
+  { a: 'kaohsiung', b: 'taitung', mode: 'tra', line: 'TRA-S', name: '台鐵南迴線', min: 150, fare: 362 },
+  // 捷運
+  { a: 'taipei', b: 'airport', mode: 'mrt', line: 'AIRPORT-MRT', name: '桃園機場捷運(直達車)', min: 38, fare: 150 },
+  { a: 'airport', b: 'taoyuan', mode: 'mrt', line: 'AIRPORT-MRT', name: '桃園機場捷運', min: 20, fare: 35, tip: 'A18 高鐵桃園站可直接轉乘高鐵。' },
+  { a: 'taipei', b: 'tamsui', mode: 'mrt', line: 'MRT-R', name: '台北捷運淡水信義線', min: 40, fare: 50 },
+  // 客運
+  { a: 'taipei', b: 'jiufen', mode: 'bus', line: 'BUS-1062', name: '基隆客運 1062', min: 80, fare: 90, tip: '忠孝復興站 2 號出口附近搭車,假日排隊人潮多。' },
+  { a: 'keelung', b: 'jiufen', mode: 'bus', line: 'BUS-788', name: '基隆客運 788', min: 45, fare: 30 },
+  { a: 'taipei', b: 'yilan', mode: 'bus', line: 'BUS-KAMALAN', name: '葛瑪蘭客運(國道5號)', min: 60, fare: 120, tip: '假日雪隧易塞車,時間可能加倍。' },
+  { a: 'taipei', b: 'taichung', mode: 'bus', line: 'BUS-TC', name: '國道客運', min: 150, fare: 260 },
+  { a: 'taichung', b: 'sunmoonlake', mode: 'bus', line: 'BUS-6670', name: '南投客運 6670(高鐵台中站發車)', min: 90, fare: 190 },
+  { a: 'chiayi', b: 'alishan', mode: 'bus', line: 'BUS-7322', name: '台灣好行 7322 阿里山線', min: 150, fare: 240, tip: '也可搭阿里山林業鐵路,車票熱門需提早預訂。' },
+  { a: 'kaohsiung', b: 'kenting', mode: 'bus', line: 'BUS-KT', name: '墾丁快線(高鐵左營站發車)', min: 140, fare: 400 },
+  { a: 'hualien', b: 'taroko', mode: 'bus', line: 'BUS-TRK', name: '台灣好行 太魯閣線', min: 50, fare: 90, tip: '部分路段可能因修復而管制,請先查詢公告。' },
+  // 飛機 / 船
+  { a: 'taipei', b: 'penghu', mode: 'flight', line: 'FLY-TSA', name: '國內線班機(松山—馬公)', min: 110, fare: 2100, tip: '時間含報到與機場接駁約 1 小時,飛行約 50 分鐘。' },
+  { a: 'kaohsiung', b: 'penghu', mode: 'flight', line: 'FLY-KHH', name: '國內線班機(小港—馬公)', min: 100, fare: 1800, tip: '時間含報到與機場接駁約 1 小時,飛行約 40 分鐘。' },
+  { a: 'chiayi', b: 'penghu', mode: 'ferry', line: 'FERRY-BD', name: '布袋港—馬公 客輪', min: 150, fare: 1000, tip: '含前往布袋港時間,航程約 90 分鐘;夏季航班較多,冬季東北季風常停航。' },
+];
+
+const MODE_INFO = {
+  hsr: { label: '高鐵', icon: '🚄', url: 'https://www.thsrc.com.tw/' },
+  tra: { label: '台鐵', icon: '🚆', url: 'https://www.railway.gov.tw/' },
+  mrt: { label: '捷運', icon: '🚇' },
+  bus: { label: '客運', icon: '🚌', url: 'https://www.taiwantrip.com.tw/' },
+  flight: { label: '飛機', icon: '✈️' },
+  ferry: { label: '船', icon: '⛴️' },
+};
+
+function getDestination(id) {
+  return DESTINATIONS.find((d) => d.id === id);
+}
+
+// 交通路線規劃:在路網上以 Dijkstra 演算法找出最佳路線。
+
+const TRANSFER_MINUTES = 15; // 每次轉乘預估的等車/步行時間
+
+const STRATEGIES = {
+  fastest: { label: '最快', cost: (e, transfer) => e.min + (transfer ? TRANSFER_MINUTES : 0) },
+  cheapest: { label: '最省錢', cost: (e, transfer) => e.fare + e.min * 0.1 + (transfer ? 5 : 0) },
+  fewest: { label: '最少轉乘', cost: (e, transfer) => e.min + (transfer ? 1000 : 0) },
+};
+
+function buildAdjacency(edges) {
+  const adj = new Map();
+  const add = (from, to, e) => {
+    if (!adj.has(from)) adj.set(from, []);
+    adj.get(from).push({ ...e, from, to });
+  };
+  for (const e of edges) {
+    add(e.a, e.b, e);
+    add(e.b, e.a, e);
+  }
+  return adj;
+}
+
+const ADJ = buildAdjacency(EDGES);
+
+// 搜尋狀態包含「目前所在節點 + 搭乘中的路線」,才能正確計算轉乘成本。
+function planRoute(fromId, toId, strategy = 'fastest') {
+  if (fromId === toId) return null;
+  const strat = STRATEGIES[strategy] ?? STRATEGIES.fastest;
+  const key = (node, line) => `${node}|${line ?? ''}`;
+  const dist = new Map([[key(fromId, null), 0]]);
+  const prev = new Map();
+  const queue = [{ node: fromId, line: null, cost: 0 }];
+
+  while (queue.length) {
+    queue.sort((x, y) => x.cost - y.cost);
+    const cur = queue.shift();
+    const curKey = key(cur.node, cur.line);
+    if (cur.cost > (dist.get(curKey) ?? Infinity)) continue;
+    if (cur.node === toId) return buildResult(curKey, prev, strategy);
+
+    if (cur.node !== fromId && getDestination(cur.node)?.noTransit) continue;
+    for (const e of ADJ.get(cur.node) ?? []) {
+      const transfer = cur.line !== null && cur.line !== e.line;
+      const nextCost = cur.cost + strat.cost(e, transfer);
+      const nextKey = key(e.to, e.line);
+      if (nextCost < (dist.get(nextKey) ?? Infinity)) {
+        dist.set(nextKey, nextCost);
+        prev.set(nextKey, { prevKey: curKey, edge: e });
+        queue.push({ node: e.to, line: e.line, cost: nextCost });
+      }
+    }
+  }
+  return null;
+}
+
+function buildResult(endKey, prev, strategy) {
+  const raw = [];
+  for (let k = endKey; prev.has(k); k = prev.get(k).prevKey) raw.unshift(prev.get(k).edge);
+
+  // 合併同一路線的連續路段
+  const legs = [];
+  for (const e of raw) {
+    const last = legs[legs.length - 1];
+    if (last && last.line === e.line) {
+      last.to = e.to;
+      last.min += e.min;
+      last.fare += e.fare;
+      last.stops.push(e.to);
+      if (e.tip && !last.tips.includes(e.tip)) last.tips.push(e.tip);
+    } else {
+      legs.push({
+        mode: e.mode, line: e.line, name: e.name, from: e.from, to: e.to,
+        min: e.min, fare: e.fare, stops: [e.from, e.to], tips: e.tip ? [e.tip] : [],
+      });
+    }
+  }
+  const transfers = legs.length - 1;
+  return {
+    strategy,
+    strategyLabel: STRATEGIES[strategy].label,
+    legs,
+    transfers,
+    totalMin: legs.reduce((s, l) => s + l.min, 0) + transfers * TRANSFER_MINUTES,
+    totalFare: legs.reduce((s, l) => s + l.fare, 0),
+  };
+}
+
+// 一次計算三種策略,去除重複的路線
+function planAlternatives(fromId, toId) {
+  const seen = new Set();
+  const results = [];
+  for (const s of Object.keys(STRATEGIES)) {
+    const r = planRoute(fromId, toId, s);
+    if (!r) continue;
+    const sig = r.legs.map((l) => `${l.line}:${l.from}>${l.to}`).join(',');
+    if (seen.has(sig)) {
+      results.find((x) => x.sig === sig).labels.push(r.strategyLabel);
+      continue;
+    }
+    seen.add(sig);
+    results.push({ ...r, sig, labels: [r.strategyLabel] });
+  }
+  return results;
+}
+
+// 多點串聯(依序經過每個地點)
+function planMultiStop(ids, strategy = 'fastest') {
+  const segments = [];
+  for (let i = 0; i < ids.length - 1; i++) {
+    if (ids[i] === ids[i + 1]) continue;
+    const r = planRoute(ids[i], ids[i + 1], strategy);
+    segments.push({ from: ids[i], to: ids[i + 1], route: r });
+  }
+  return segments;
+}
+
+function travelMinutes(fromId, toId) {
+  if (fromId === toId) return 0;
+  return planRoute(fromId, toId, 'fastest')?.totalMin ?? Infinity;
+}
+
+function formatDuration(min) {
+  const m = Math.round(min);
+  if (m < 60) return `${m} 分鐘`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h} 小時 ${r} 分` : `${h} 小時`;
+}
+
+function placeName(id) {
+  return getDestination(id)?.name ?? id;
+}
+
+// 行程自動規劃:依照興趣、天數、步調,像導遊一樣排出每日行程。
+
+const PACES = {
+  relaxed: { label: '悠閒', hours: 5 },
+  normal: { label: '一般', hours: 7 },
+  packed: { label: '緊湊', hours: 9 },
+};
+
+function scoreAttraction(att, interests) {
+  const matches = att.tags.filter((t) => interests.includes(t)).length;
+  return matches * 3 + (att.popular ? 1 : 0);
+}
+
+function isRelevant(att, interests) {
+  return interests.length === 0 || att.tags.some((t) => interests.includes(t));
+}
+
+function destinationScore(dest, interests, usedIds) {
+  return dest.attractions
+    .filter((a) => !usedIds.has(a.id) && isRelevant(a, interests))
+    .map((a) => scoreAttraction(a, interests))
+    .sort((x, y) => y - x)
+    .slice(0, 3)
+    .reduce((s, x) => s + x, 0);
+}
+
+// 推薦景點排行(首頁「導遊推薦」使用)
+function recommend(interests, { region, limit = 8 } = {}) {
+  const list = [];
+  for (const d of DESTINATIONS) {
+    if (region && d.region !== region) continue;
+    for (const a of d.attractions) {
+      if (!isRelevant(a, interests)) continue;
+      list.push({ ...a, destId: d.id, destName: d.name, score: scoreAttraction(a, interests) });
+    }
+  }
+  return list.sort((x, y) => y.score - x.score || x.name.localeCompare(y.name, 'zh-Hant')).slice(0, limit);
+}
+
+function pickNextDestination(current, interests, usedAtt, visitedDest) {
+  let best = null;
+  for (const d of DESTINATIONS) {
+    if (d.id === current || visitedDest.has(d.id)) continue;
+    const score = destinationScore(d, interests, usedAtt);
+    if (score <= 0) continue;
+    const hrs = travelMinutes(current, d.id) / 60;
+    if (!Number.isFinite(hrs)) continue;
+    // 分數高、距離近的優先;車程超過 4 小時大幅扣分
+    const value = score / (1 + hrs) - (hrs > 4 ? 5 : 0);
+    if (!best || value > best.value) best = { id: d.id, value, hrs };
+  }
+  return best;
+}
+
+function pickMeal(dest, interests, usedFoods, hasNightSpot) {
+  const foods = dest.foods.filter((f) => !usedFoods.has(`${dest.id}:${f.name}`) && !(hasNightSpot && f.type === '夜市'));
+  if (!foods.length) return null;
+  const preferMarket = interests.includes('美食') && !hasNightSpot;
+  const f = (preferMarket && foods.find((x) => x.type === '夜市')) || foods.find((x) => x.type !== '伴手禮') || foods[0];
+  usedFoods.add(`${dest.id}:${f.name}`);
+  return f;
+}
+
+/**
+ * @param {{start:string, days:number, interests:string[], pace?:keyof PACES, returnToStart?:boolean}} opts
+ */
+function generateItinerary({ start, days, interests = [], pace = 'normal', returnToStart = false }) {
+  const dayHours = PACES[pace]?.hours ?? PACES.normal.hours;
+  const usedAtt = new Set();
+  const usedFoods = new Set();
+  const visitedDest = new Set([start]);
+  let current = start;
+  const plan = [];
+
+  for (let day = 1; day <= days; day++) {
+    let hoursLeft = dayHours;
+    const items = [];
+    const isLastDay = day === days;
+    const returnMin = isLastDay && returnToStart ? travelMinutes(current, start) : 0;
+
+    for (let guard = 0; guard < 20; guard++) {
+      const dest = getDestination(current);
+      const candidates = dest.attractions
+        .filter((a) => !a.evening && !usedAtt.has(a.id) && isRelevant(a, interests))
+        .sort((x, y) => scoreAttraction(y, interests) - scoreAttraction(x, interests));
+
+      // 預留晚上逛夜市的時間
+      const nightReserve = isLastDay && returnToStart ? 0 : Math.max(0, ...dest.attractions
+        .filter((a) => a.evening && !usedAtt.has(a.id) && isRelevant(a, interests)).map((a) => a.hours));
+      const budget = hoursLeft - nightReserve - (isLastDay && returnToStart ? returnMin / 60 : 0);
+      const fit = candidates.find((a) => a.hours <= budget);
+      if (fit) {
+        usedAtt.add(fit.id);
+        hoursLeft -= fit.hours;
+        items.push({ type: 'spot', destId: current, destName: dest.name, ...fit });
+        continue;
+      }
+      if (candidates.length > 0 || isLastDay) break; // 今天時間用完,明天繼續
+
+      const next = pickNextDestination(current, interests, usedAtt, visitedDest);
+      if (!next) break;
+      if (next.hrs > budget && items.length > 0) break; // 車程太長,改到隔天早上出發
+      const route = planRoute(current, next.id, 'fastest');
+      items.push({ type: 'travel', from: current, to: next.id, route });
+      hoursLeft -= route.totalMin / 60;
+      visitedDest.add(next.id);
+      current = next.id;
+    }
+
+    // 夜市等晚上才熱鬧的景點,安排在當天最後
+    const here = getDestination(current);
+    const night = here.attractions
+      .filter((a) => a.evening && !usedAtt.has(a.id) && isRelevant(a, interests))
+      .sort((x, y) => scoreAttraction(y, interests) - scoreAttraction(x, interests))[0];
+    const leavingTonight = isLastDay && returnToStart && current !== start;
+    if (night && !leavingTonight && night.hours <= hoursLeft) {
+      usedAtt.add(night.id);
+      items.push({ type: 'spot', destId: current, destName: here.name, ...night });
+    }
+
+    const meal = pickMeal(here, interests, usedFoods, Boolean(night) || leavingTonight);
+    if (meal) items.push({ ...meal, type: 'food', foodType: meal.type, destId: current, destName: here.name });
+
+    if (leavingTonight) {
+      items.push({ type: 'travel', from: current, to: start, route: planRoute(current, start, 'fastest') });
+      current = start;
+    }
+    plan.push({ day, items, stayAt: getDestination(current).name });
+  }
+  return plan;
+}
+
+// 「問導遊」:以關鍵字理解旅客問題,回覆景點、美食與交通建議。
+// 原型採規則式比對,正式版可替換為大型語言模型(見 docs/DESIGN.md)。
+
+const INTENT_WORDS = {
+  food: ['吃', '美食', '小吃', '餐廳', '夜市', '好吃', '伴手禮', '喝'],
+  route: ['怎麼去', '怎麼到', '交通', '搭什麼', '坐什麼', '路線', '怎麼走', '到'],
+  play: ['玩', '景點', '去哪', '推薦', '好玩', '逛', '看'],
+};
+
+const INTEREST_WORDS = {
+  室內: ['下雨', '雨天', '室內', '太熱'],
+  親子: ['親子', '小孩', '孩子', '小朋友', '家庭'],
+  溫泉: ['溫泉', '泡湯'],
+  海邊: ['海邊', '海灘', '玩水', '島'],
+  登山: ['爬山', '登山', '步道', '健行'],
+  夜景: ['夜景', '晚上'],
+  老街: ['老街'],
+  文化: ['歷史', '古蹟', '文化', '博物館', '廟'],
+  自然: ['自然', '風景', '大自然'],
+  拍照: ['拍照', '打卡', 'ig', 'IG', '網美'],
+  購物: ['購物', '逛街', '買'],
+};
+
+function findDestinations(text) {
+  const hits = [];
+  for (const d of DESTINATIONS) {
+    for (const n of [d.name, ...d.aliases]) {
+      for (let p = text.indexOf(n); p >= 0; p = text.indexOf(n, p + 1)) {
+        hits.push({ id: d.id, start: p, end: p + n.length });
+      }
+    }
+  }
+  // 較長的名稱優先(「桃園機場」不應同時被判成「桃園」)
+  const kept = hits.filter((h) => !hits.some((o) => o !== h && o.id !== h.id
+    && o.start <= h.start && o.end >= h.end && o.end - o.start > h.end - h.start));
+  // 依出現順序排列,「從A到B」才能判斷方向
+  return kept.sort((x, y) => x.start - y.start).map((h) => h.id).filter((id, i, arr) => arr.indexOf(id) === i);
+}
+
+const has = (text, words) => words.some((w) => text.includes(w));
+
+function askGuide(question) {
+  const text = question.trim();
+  if (!text) return greet();
+
+  const dests = findDestinations(text);
+  const region = REGIONS.find((r) => text.includes(r));
+  const interests = Object.entries(INTEREST_WORDS).filter(([, ws]) => has(text, ws)).map(([k]) => k);
+
+  // 交通:「從台北到台南怎麼去」
+  if (dests.length >= 2 && (has(text, INTENT_WORDS.route) || text.includes('從'))) {
+    const [from, to] = dests;
+    const routes = planAlternatives(from, to);
+    if (!routes.length) return { text: `目前資料庫裡還找不到 ${placeName(from)} 到 ${placeName(to)} 的路線,建議改搭計程車或租車。` };
+    const best = routes[0];
+    const steps = best.legs.map((l) => `${l.name}(${placeName(l.from)} → ${placeName(l.to)},約 ${formatDuration(l.min)})`).join(' → ');
+    return {
+      text: `從${placeName(from)}到${placeName(to)},最快的方式是:${steps}。全程約 ${formatDuration(best.totalMin)},票價約 NT$${best.totalFare}。`,
+      action: { type: 'route', from, to },
+    };
+  }
+
+  const dest = dests[0] ? DESTINATIONS.find((d) => d.id === dests[0]) : null;
+
+  // 美食
+  if (has(text, INTENT_WORDS.food)) {
+    if (dest) {
+      const list = dest.foods.slice(0, 5).map((f) => `【${f.type}】${f.name}:${f.desc}`);
+      if (!list.length) return { text: `${dest.name}比較少特色小吃,建議回到鄰近市區用餐喔!` };
+      return { text: `來${dest.name}一定要試試:\n${list.join('\n')}`, action: { type: 'food', destId: dest.id } };
+    }
+    const markets = DESTINATIONS.flatMap((d) => d.foods.filter((f) => f.type === '夜市').map((f) => `${f.name}(${d.name})`));
+    return { text: `台灣必逛的夜市有:${markets.join('、')}。告訴我你在哪個城市,我可以推薦當地小吃!` };
+  }
+
+  // 景點推薦
+  if (dest) {
+    const picks = recommend(interests, { limit: 50 }).filter((a) => a.destId === dest.id).slice(0, 4);
+    const list = (picks.length ? picks : dest.attractions.slice(0, 4)).map((a) => `・${a.name}:${a.desc}`);
+    return {
+      text: `${dest.intro}\n推薦你去:\n${list.join('\n')}\n\n🚏 在地交通:${dest.localTransport}`,
+      action: { type: 'dest', destId: dest.id },
+    };
+  }
+
+  if (interests.length || region || has(text, INTENT_WORDS.play)) {
+    const picks = recommend(interests, { region, limit: 5 });
+    if (!picks.length) return { text: '這個條件我暫時找不到適合的景點,換個說法試試看?' };
+    const label = interests.map((k) => INTERESTS.find((i) => i.key === k)?.label).join('、');
+    const head = `${region ?? '全台'}${label ? `「${label}」` : ''}推薦`;
+    return { text: `${head}:\n${picks.map((a) => `・${a.name}(${a.destName}):${a.desc}`).join('\n')}` };
+  }
+
+  return greet();
+}
+
+function greet() {
+  return {
+    text: '你好!我是你的台灣小導遊 🧭\n你可以問我:\n・台南有什麼好吃的?\n・從台北到花蓮怎麼去?\n・下雨天台中可以去哪?\n・南部適合親子的景點',
+  };
+}
+
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const rad = (d) => (d * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function nearbyAttractions(lat, lng, limit = 6) {
+  return DESTINATIONS.flatMap((d) => d.attractions.map((a) => ({ ...a, destId: d.id, destName: d.name })))
+    .map((a) => ({ ...a, km: distanceKm(lat, lng, a.lat, a.lng) }))
+    .sort((x, y) => x.km - y.km)
+    .slice(0, limit);
+}
+
+function nearestDestination(lat, lng) {
+  return DESTINATIONS.map((d) => ({ d, km: distanceKm(lat, lng, d.lat, d.lng) })).sort((x, y) => x.km - y.km)[0].d;
+}
+
+function mapsUrl(name) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}`;
+}
+
+function transitUrl(fromName, toName) {
+  const p = new URLSearchParams({ api: '1', origin: fromName, destination: toName, travelmode: 'transit' });
+  return `https://www.google.com/maps/dir/?${p}`;
+}
+
+
+const view = document.getElementById('view');
+
+// ---------- 狀態與本機儲存 ----------
+const storage = {
+  get(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 無痕模式等情況忽略 */ }
+  },
+};
+
+const state = {
+  tab: 'home',
+  interests: [],
+  region: '',
+  chat: [{ who: 'bot', text: askGuide('').text }],
+  nearby: null,
+  plan: { start: 'taipei', days: 3, pace: 'normal', interests: [], returnToStart: true, result: null },
+  route: { from: 'taipei', to: 'tainan', results: null },
+  explore: { destId: 'taipei' },
+  saved: storage.get('saved', []), // [{id, name, destId}]
+};
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const findAttraction = (id) => {
+  for (const d of DESTINATIONS) {
+    const a = d.attractions.find((x) => x.id === id);
+    if (a) return { ...a, destId: d.id, destName: d.name };
+  }
+  return null;
+};
+const isSaved = (id) => state.saved.some((s) => s.id === id);
+
+function destOptions(selected, { withEmpty = false } = {}) {
+  const groups = REGIONS.map((r) => {
+    const opts = DESTINATIONS.filter((d) => d.region === r)
+      .map((d) => `<option value="${d.id}" ${d.id === selected ? 'selected' : ''}>${d.name}</option>`).join('');
+    return `<optgroup label="${r}">${opts}</optgroup>`;
+  }).join('');
+  return (withEmpty ? '<option value="">全部地區</option>' : '') + groups;
+}
+
+function interestChips(selected, group) {
+  return `<div class="chips">${INTERESTS.map((i) =>
+    `<button class="chip ${selected.includes(i.key) ? 'on' : ''}" data-action="toggle-interest" data-group="${group}" data-key="${i.key}">${i.icon} ${i.label}</button>`).join('')}</div>`;
+}
+
+function spotCard(a) {
+  return `<div class="card">
+    <div class="row spread"><h3>${esc(a.name)}</h3>
+      <button class="icon-btn" data-action="save" data-id="${a.id}" aria-label="收藏">${isSaved(a.id) ? '⭐' : '☆'}</button></div>
+    <div class="muted small">📍 ${esc(a.destName)} ・ 建議停留 ${a.hours} 小時${a.km != null ? ` ・ 距離 ${a.km.toFixed(1)} km` : ''}</div>
+    <p>${esc(a.desc)}</p>
+    ${a.tip ? `<p class="small">💡 ${esc(a.tip)}</p>` : ''}
+    <div>${a.tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><a class="small" href="${mapsUrl(a.name)}" target="_blank" rel="noopener">🗺️ 開啟地圖</a></div>
+  </div>`;
+}
+
+function routeCard(r, from, to) {
+  const legs = r.legs.map((l, i) => `
+    ${i > 0 ? `<li class="transfer">↻ 於${placeName(l.from)}轉乘(預留約 ${TRANSFER_MINUTES} 分鐘)</li>` : ''}
+    <li class="leg">
+      <div class="mode">${MODE_INFO[l.mode].icon}</div>
+      <div>
+        <strong>${esc(l.name)}</strong>
+        <div class="muted small">${l.stops.map(placeName).join(' → ')}</div>
+        <div class="small">約 ${formatDuration(l.min)} ・ NT$${l.fare}${MODE_INFO[l.mode].url ? ` ・ <a href="${MODE_INFO[l.mode].url}" target="_blank" rel="noopener">查時刻/訂票</a>` : ''}</div>
+        ${l.tips.map((t) => `<div class="small">💡 ${esc(t)}</div>`).join('')}
+      </div>
+    </li>`).join('');
+  return `<div class="card route-opt">
+    <div class="row spread">
+      <div>${r.labels.map((x) => `<span class="chip on small">${x}</span>`).join(' ')}</div>
+      <div class="muted small">轉乘 ${r.transfers} 次</div>
+    </div>
+    <div class="row" style="margin-top:8px; gap:18px">
+      <div><div class="muted small">總時間</div><div class="stat">${formatDuration(r.totalMin)}</div></div>
+      <div><div class="muted small">參考票價</div><div class="stat">NT$${r.totalFare}</div></div>
+    </div>
+    <ul class="legs">${legs}</ul>
+    <a class="small" href="${transitUrl(placeName(from), placeName(to))}" target="_blank" rel="noopener">🗺️ 用 Google 地圖查即時班次</a>
+  </div>`;
+}
+
+// ---------- 各頁面 ----------
+function renderHome() {
+  const recs = recommend(state.interests, { region: state.region || undefined, limit: 6 });
+  return `
+    <div class="card">
+      <h2 style="margin-top:0">💬 問問小導遊</h2>
+      <div class="chat" id="chat">${state.chat.map((m) => `<div class="bubble ${m.who}">${esc(m.text)}</div>`).join('')}</div>
+      <form class="ask" data-form="ask">
+        <input type="text" name="q" placeholder="例:台南有什麼好吃的?" autocomplete="off" />
+        <button class="btn" type="submit">送出</button>
+      </form>
+    </div>
+
+    <h2>✨ 導遊推薦</h2>
+    <p class="muted">選擇你的旅遊偏好,我會推薦最適合的景點。</p>
+    ${interestChips(state.interests, 'home')}
+    <label class="field">地區</label>
+    <select data-bind="region">
+      <option value="">全台灣</option>
+      ${REGIONS.map((r) => `<option ${r === state.region ? 'selected' : ''}>${r}</option>`).join('')}
+    </select>
+    <div class="grid" style="margin-top:12px">${recs.map(spotCard).join('') || '<div class="empty">沒有符合的景點</div>'}</div>
+
+    <h2>📍 我附近有什麼?</h2>
+    <button class="btn ghost" data-action="nearby">使用我的位置</button>
+    <div id="nearby" class="grid" style="margin-top:12px">${state.nearby ?? ''}</div>`;
+}
+
+function renderPlan() {
+  const p = state.plan;
+  const result = p.result ? p.result.map((d) => `
+    <div class="card day">
+      <h3>Day ${d.day}</h3>
+      <ul class="timeline">${d.items.map(renderItem).join('') || '<li>自由活動</li>'}</ul>
+      <div class="muted small" style="margin-top:6px">🏨 今晚住宿:${esc(d.stayAt)}</div>
+    </div>`).join('') : '';
+  return `
+    <h2>🗓️ 幫我排行程</h2>
+    <div class="card">
+      <label class="field">出發地</label>
+      <select data-bind="plan.start">${destOptions(p.start)}</select>
+      <div class="row" style="gap:12px">
+        <div style="flex:1"><label class="field">天數</label>
+          <select data-bind="plan.days">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${n === p.days ? 'selected' : ''}>${n} 天</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="field">步調</label>
+          <select data-bind="plan.pace">${Object.entries(PACES).map(([k, v]) => `<option value="${k}" ${k === p.pace ? 'selected' : ''}>${v.label}(每天約 ${v.hours} 小時)</option>`).join('')}</select></div>
+      </div>
+      <label class="field">旅遊偏好(可複選,不選則推薦熱門景點)</label>
+      ${interestChips(p.interests, 'plan')}
+      <label class="row small" style="margin-top:10px"><input type="checkbox" data-bind="plan.returnToStart" ${p.returnToStart ? 'checked' : ''}/> 最後一天回到出發地</label>
+      <div style="margin-top:12px"><button class="btn" data-action="make-plan">產生行程</button></div>
+    </div>
+    ${result}
+    ${p.result ? '<p class="notice">行程由系統依景點停留時間與交通時間自動估算,實際請依營業時間與天氣彈性調整。</p>' : ''}`;
+}
+
+function renderItem(it) {
+  if (it.type === 'travel') {
+    const r = it.route;
+    const how = r.legs.map((l) => `${MODE_INFO[l.mode].icon} ${l.name}`).join(' → ');
+    return `<li class="travel"><strong>移動:${placeName(it.from)} → ${placeName(it.to)}</strong>
+      <div class="small muted">${esc(how)} ・ 約 ${formatDuration(r.totalMin)} ・ NT$${r.totalFare}</div></li>`;
+  }
+  if (it.type === 'food') {
+    return `<li class="food"><strong>🍽️ 美食推薦:${esc(it.name)}</strong><div class="small muted">${esc(it.desc)}</div></li>`;
+  }
+  return `<li><strong>${esc(it.name)}</strong> <span class="muted small">(${it.hours} 小時)</span>
+    <div class="small muted">${esc(it.desc)}</div>
+    <a class="small" href="${mapsUrl(it.name)}" target="_blank" rel="noopener">地圖</a></li>`;
+}
+
+function renderRoute() {
+  const r = state.route;
+  const results = r.results == null ? '' : r.results.length
+    ? r.results.map((x) => routeCard(x, r.from, r.to)).join('')
+    : '<div class="empty">找不到路線,可能需要租車或包車前往。</div>';
+  return `
+    <h2>🚆 交通路線規劃</h2>
+    <div class="card">
+      <label class="field">從</label>
+      <select data-bind="route.from">${destOptions(r.from)}</select>
+      <div style="text-align:center; margin-top:6px"><button class="btn ghost small" data-action="swap">⇅ 交換</button></div>
+      <label class="field">到</label>
+      <select data-bind="route.to">${destOptions(r.to)}</select>
+      <div style="margin-top:12px"><button class="btn" data-action="find-route">搜尋路線</button></div>
+    </div>
+    ${results}
+    <p class="notice">票價與時間為參考值,班次請以台灣高鐵、台鐵、客運公司公告為準。</p>
+    ${localTransportCard(r.to)}`;
+}
+
+function localTransportCard(destId) {
+  const d = getDestination(destId);
+  return d ? `<div class="card"><h3>🚏 到了${d.name}之後</h3><p class="small">${esc(d.localTransport)}</p></div>` : '';
+}
+
+function renderExplore() {
+  const d = getDestination(state.explore.destId);
+  const byType = {};
+  for (const f of d.foods) (byType[f.type] ??= []).push(f);
+  const foods = Object.entries(byType).map(([type, list]) => `
+    <div class="card"><h3>${type}</h3>${list.map((f) => `<p><strong>${esc(f.name)}</strong><br><span class="small muted">${esc(f.desc)}</span>
+      <br><a class="small" href="${mapsUrl(`${d.name} ${f.name}`)}" target="_blank" rel="noopener">找附近店家</a></p>`).join('')}</div>`).join('');
+  return `
+    <h2>🍜 吃喝玩樂</h2>
+    <select data-bind="explore.destId">${destOptions(d.id)}</select>
+    <div class="card" style="margin-top:12px">
+      <h3>${d.name}</h3><p>${esc(d.intro)}</p><p class="small muted">🚏 ${esc(d.localTransport)}</p>
+    </div>
+    <h2>😋 好吃的</h2>
+    ${foods || '<div class="empty">這裡以自然景觀為主,建議回到鄰近市區用餐。</div>'}
+    <h2>🎡 好玩的</h2>
+    <div class="grid">${d.attractions.map((a) => spotCard({ ...a, destName: d.name })).join('') || '<div class="empty">此地為交通轉運點</div>'}</div>`;
+}
+
+function renderSaved() {
+  if (!state.saved.length) return '<h2>⭐ 我的收藏</h2><div class="empty">還沒有收藏景點,在推薦清單點 ☆ 加入吧!</div>';
+  const items = state.saved.map((s) => findAttraction(s.id)).filter(Boolean);
+  const stops = [...new Set(items.map((a) => a.destId))];
+  const segs = planMultiStop(stops);
+  const routeHtml = segs.length ? `<div class="card"><h3>🧭 串聯路線(依收藏順序)</h3><ul class="legs">${segs.map((s) => s.route
+    ? `<li class="leg"><div class="mode">${MODE_INFO[s.route.legs[0].mode].icon}</div><div><strong>${placeName(s.from)} → ${placeName(s.to)}</strong>
+       <div class="small muted">${s.route.legs.map((l) => l.name).join(' → ')} ・ 約 ${formatDuration(s.route.totalMin)} ・ NT$${s.route.totalFare}</div></div></li>`
+    : `<li class="leg"><div class="mode">🚕</div><div>${placeName(s.from)} → ${placeName(s.to)}:建議租車</div></li>`).join('')}</ul></div>` : '';
+  return `<h2>⭐ 我的收藏</h2>
+    ${items.map((a, i) => `<div class="card row spread">
+      <div><strong>${esc(a.name)}</strong><div class="muted small">${a.destName} ・ ${a.hours} 小時</div></div>
+      <div class="row">
+        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="-1" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="1" ${i === items.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="btn ghost small" data-action="save" data-id="${a.id}">移除</button>
+      </div></div>`).join('')}
+    ${routeHtml}`;
+}
+
+const PAGES = { home: renderHome, plan: renderPlan, route: renderRoute, explore: renderExplore, saved: renderSaved };
+
+function render() {
+  view.innerHTML = PAGES[state.tab]();
+  document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.tab === state.tab));
+  const chat = document.getElementById('chat');
+  if (chat) chat.scrollTop = chat.scrollHeight;
+}
+
+function go(tab) {
+  state.tab = tab;
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ---------- 事件 ----------
+document.querySelector('.tabbar').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-tab]');
+  if (b) go(b.dataset.tab);
+});
+
+view.addEventListener('change', (e) => {
+  const path = e.target.dataset.bind;
+  if (!path) return;
+  const [a, b] = path.split('.');
+  let value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  if (path === 'plan.days') value = Number(value);
+  if (b) state[a][b] = value; else state[a] = value;
+  if (path === 'route.to') state.route.results = null;
+  render();
+});
+
+view.addEventListener('submit', (e) => {
+  if (e.target.dataset.form !== 'ask') return;
+  e.preventDefault();
+  const q = e.target.q.value.trim();
+  if (!q) return;
+  const ans = askGuide(q);
+  state.chat.push({ who: 'me', text: q }, { who: 'bot', text: ans.text });
+  if (ans.action?.type === 'route') Object.assign(state.route, { from: ans.action.from, to: ans.action.to, results: planAlternatives(ans.action.from, ans.action.to) });
+  if (ans.action?.type === 'food' || ans.action?.type === 'dest') state.explore.destId = ans.action.destId;
+  render();
+  view.querySelector('input[name=q]')?.focus();
+});
+
+view.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const { action } = el.dataset;
+
+  if (action === 'toggle-interest') {
+    const list = el.dataset.group === 'home' ? state.interests : state.plan.interests;
+    const i = list.indexOf(el.dataset.key);
+    if (i >= 0) list.splice(i, 1); else list.push(el.dataset.key);
+    render();
+  } else if (action === 'save') {
+    const id = el.dataset.id;
+    if (isSaved(id)) state.saved = state.saved.filter((s) => s.id !== id);
+    else state.saved.push({ id });
+    storage.set('saved', state.saved);
+    render();
+  } else if (action === 'move') {
+    const i = state.saved.findIndex((s) => s.id === el.dataset.id);
+    const j = i + Number(el.dataset.dir);
+    [state.saved[i], state.saved[j]] = [state.saved[j], state.saved[i]];
+    storage.set('saved', state.saved);
+    render();
+  } else if (action === 'make-plan') {
+    state.plan.result = generateItinerary(state.plan);
+    render();
+  } else if (action === 'find-route') {
+    state.route.results = state.route.from === state.route.to ? [] : planAlternatives(state.route.from, state.route.to);
+    render();
+  } else if (action === 'swap') {
+    Object.assign(state.route, { from: state.route.to, to: state.route.from, results: null });
+    render();
+  } else if (action === 'nearby') {
+    if (!navigator.geolocation) {
+      state.nearby = '<div class="empty">此裝置不支援定位。</div>';
+      render();
+      return;
+    }
+    el.disabled = true;
+    el.textContent = '定位中…';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        state.nearby = nearbyAttractions(pos.coords.latitude, pos.coords.longitude).map(spotCard).join('');
+        render();
+      },
+      () => {
+        state.nearby = '<div class="empty">無法取得位置,請確認已允許定位權限。</div>';
+        render();
+      },
+      { timeout: 10000 },
+    );
+  }
+});
+
+render();
+
+
+</script>
+</body>
+</html>
