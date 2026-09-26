@@ -1,8 +1,8 @@
 // 離線快取:網路優先,斷線時改用快取(旅途中收訊不佳也能查資料)
-const CACHE = 'tw-guide-v2';
+const CACHE = 'tw-guide-v3';
 const ASSETS = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest', 'icons/icon.svg',
-  'js/app.js', 'js/data.js', 'js/planner.js', 'js/itinerary.js', 'js/guide.js', 'js/ai-guide.js', 'js/geo.js',
+  'js/app.js', 'js/data.js', 'js/planner.js', 'js/itinerary.js', 'js/data-en.js', 'js/i18n.js', 'js/guide.js', 'js/ai-guide.js', 'js/geo.js', 'js/phrases.js',
 ];
 
 self.addEventListener('install', (e) => {

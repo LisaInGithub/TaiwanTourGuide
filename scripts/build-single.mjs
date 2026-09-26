@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url);
 const read = (p) => readFile(new URL(p, root), 'utf8');
 
 // 依相依順序串接模組,移除 import/export(各模組的頂層名稱不重複)
-const order = ['js/data.js', 'js/planner.js', 'js/itinerary.js', 'js/guide.js', 'js/ai-guide.js', 'js/geo.js', 'js/app.js'];
+const order = ['js/data.js', 'js/data-en.js', 'js/i18n.js', 'js/planner.js', 'js/itinerary.js', 'js/guide.js', 'js/ai-guide.js', 'js/geo.js', 'js/phrases.js', 'js/app.js'];
 const js = (await Promise.all(order.map(read)))
   .map((src) => src.replace(/^import[\s\S]*?from\s+'[^']+';\n/gm, '').replace(/^export\s+/gm, ''))
   .join('\n')

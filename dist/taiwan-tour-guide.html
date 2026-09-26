@@ -162,21 +162,51 @@ a { color: var(--primary); }
 .tabbar button span { font-size: 1.25rem; }
 .tabbar button.active { color: var(--primary); font-weight: 700; }
 
+/* ---- visitor features ---- */
+.topbar { align-items: center; }
+.lang-btn {
+  margin-left: auto; background: rgba(255, 255, 255, 0.16); color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 999px; padding: 4px 12px; font-size: 0.85rem;
+}
+.zh { display: block; font-weight: 400; font-size: 0.85em; color: var(--muted); }
+.link { background: none; border: 0; padding: 0; color: var(--primary); text-decoration: underline; }
+.phrases { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.phrase {
+  display: flex; flex-direction: column; gap: 2px; text-align: left;
+  background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+}
+.phrase:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.zh-big { font-size: 1.35rem; font-weight: 700; line-height: 1.3; }
+.tea-grid { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center; }
+.tea-grid .field { margin: 0; }
+.tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tips li { display: grid; grid-template-columns: 2.2em 1fr; gap: 8px; align-items: start; }
+.sos-num { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; grid-column: 1 / -1; font-size: 1.1rem; }
+.tips li:has(.sos-num) { grid-template-columns: 1fr; gap: 0; }
+label.btn { display: inline-block; cursor: pointer; }
+.overlay {
+  position: fixed; inset: 0; z-index: 20; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  padding: 24px 16px; text-align: center; cursor: pointer;
+}
+.overlay[hidden] { display: none; }
+.zh-huge { font-size: clamp(2.2rem, 11vw, 5rem); font-weight: 800; line-height: 1.25; word-break: break-word; }
+.overlay .py { font-size: 1.2rem; color: var(--muted); }
+.overlay .en { font-size: 1.1rem; }
+.close-hint { color: var(--muted); margin-top: 20px; }
+
 </style>
 <header class="topbar">
-    <div class="brand">🧭 台灣小導遊</div>
-    <div class="subtitle">Taiwan Tour Guide</div>
+    <div class="brand">🧭 Taiwan Buddy</div>
+    <div class="subtitle">台灣小導遊</div>
+    <button class="lang-btn" id="lang-btn" type="button" aria-label="Switch language">中文</button>
   </header>
 
   <main id="view" aria-live="polite"></main>
 
-  <nav class="tabbar" aria-label="主選單">
-    <button data-tab="home" class="active"><span>🏠</span>導遊</button>
-    <button data-tab="plan"><span>🗓️</span>行程</button>
-    <button data-tab="route"><span>🚆</span>交通</button>
-    <button data-tab="explore"><span>🍜</span>吃喝玩樂</button>
-    <button data-tab="saved"><span>⭐</span>收藏</button>
-  </nav>
+  <nav class="tabbar" aria-label="Main"></nav>
+
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" hidden></div>
 <script type="module">
 // 台灣旅遊資料庫(原型版本)
 // 交通時間與票價為「參考值」,實際請以各營運單位公告為準。
@@ -656,6 +686,361 @@ function shopsOf(destId, dish) {
   return dish ? list.filter((x) => x.dish === dish) : list;
 }
 
+// English translations of data.js (keyed by id, or by the Chinese name when there is no id).
+// Chinese names stay in data.js so the app can always show them to locals, taxi drivers and vendors.
+
+const REGION_EN = { 北部: 'North', 中部: 'Central', 南部: 'South', 東部: 'East', 離島: 'Islands' };
+
+const INTEREST_EN = {
+  自然: 'Nature', 文化: 'Culture & history', 老街: 'Old streets', 美食: 'Night markets & food', 溫泉: 'Hot springs',
+  親子: 'Family-friendly', 購物: 'Shopping', 拍照: 'Photo spots', 海邊: 'Beaches & islands', 登山: 'Hiking',
+  夜景: 'Night views', 室內: 'Rainy-day indoor',
+};
+
+const FOOD_TYPE_EN = {
+  小吃: 'Street food', 夜市: 'Night market', 甜點: 'Dessert', 飲品: 'Drinks', 伴手禮: 'Souvenir',
+  餐廳: 'Restaurant', 水果: 'Fruit', 早餐: 'Breakfast',
+};
+
+const DEST_EN = {
+  taipei: { name: 'Taipei', intro: 'The capital mixes modern city life with old temples. The MRT goes almost everywhere, and it has the highest density of street food and night markets in Taiwan.', localTransport: 'MRT + buses are easiest. An EasyCard works on the MRT, buses and YouBike bikes.' },
+  jiufen: { name: 'Jiufen', intro: 'A hillside gold-mining town of red lanterns, stone steps and sea views.', localTransport: 'Walk the old street. Buses 788 and 1062 go on to Jinguashi.' },
+  tamsui: { name: 'Tamsui', intro: 'A riverside town with an old street, colonial forts and famous sunsets.', localTransport: 'Walk from MRT Tamsui station. Buses or a ferry go to Fisherman’s Wharf.' },
+  pingxi: { name: 'Pingxi', intro: 'Railway villages where you release sky lanterns right on the train tracks.', localTransport: 'Ride the Pingxi branch line between Shifen, Pingxi and Jingtong; a one-day pass is sold at stations.' },
+  keelung: { name: 'Keelung', intro: 'A rainy harbour city famous for its temple night market.', localTransport: 'City buses; Heping Island and Zhengbin port are 15–20 minutes from the centre.' },
+  yilan: { name: 'Yilan', intro: 'Just through the Snow Mountain tunnel: hot springs, rice fields and traditional arts.', localTransport: 'Trains link Jiaoxi, Yilan and Luodong. Tourist Shuttle buses or a rental car reach the sights.' },
+  taoyuan: { name: 'Taoyuan', intro: 'Home of the international airport, with the Daxi old street and a big aquarium.', localTransport: 'HSR Taoyuan station connects to the Airport MRT. Take a bus or taxi to Daxi.' },
+  airport: { name: 'Taoyuan Airport', intro: 'Taiwan’s main international gateway. Take the Airport MRT into Taipei or change to the HSR.', localTransport: 'The Airport MRT express reaches Taipei Main Station in about 35–40 minutes.' },
+  hsinchu: { name: 'Hsinchu', intro: 'The “windy city”: temple street food and the Hakka mountain town of Neiwan.', localTransport: 'HSR Hsinchu station is in Zhubei; the Liujia train line goes into the city.' },
+  taichung: { name: 'Taichung', intro: 'A sunny, relaxed city with big night markets, creative spaces and a claim to inventing bubble tea.', localTransport: 'HSR Taichung is in Wuri; take the train, MRT Green Line or a bus into the city (15–30 min).' },
+  sunmoonlake: { name: 'Sun Moon Lake', intro: 'Taiwan’s largest natural lake, surrounded by mountains; lovely in every season.', localTransport: 'Get around the lake by boat, the lake bus or bicycle. A cable car goes to the Formosan Aboriginal Culture Village.' },
+  chiayi: { name: 'Chiayi', intro: 'Gateway to Alishan and the home of turkey rice.', localTransport: 'HSR Chiayi is in Taibao; take the BRT into town (about 30 min).' },
+  alishan: { name: 'Alishan', intro: 'Sunrise, sea of clouds, a forest railway and giant trees: Taiwan’s best-known mountain area.', localTransport: 'Inside the park, walk or ride the forest railway branch lines (Zhushan, Shenmu).' },
+  tainan: { name: 'Tainan', intro: 'Taiwan’s oldest city, packed with historic sites, and widely seen as the capital of street food.', localTransport: 'From HSR Tainan take the Shalun line to Tainan station. In town, use YouBike, a scooter or a taxi.' },
+  kaohsiung: { name: 'Kaohsiung', intro: 'A sunny port city with art districts, harbour views and temples.', localTransport: 'HSR Zuoying links to the Kaohsiung MRT; a light rail loops the harbour, and ferries go to Cijin.' },
+  kenting: { name: 'Kenting', intro: 'Taiwan’s tropical southern tip and a marine national park, warm all year.', localTransport: 'Kenting shuttle buses run but are infrequent; most visitors rent a scooter or e-bike.' },
+  hualien: { name: 'Hualien', intro: 'Between the Pacific and the Central Mountains on the east coast.', localTransport: 'The city is small enough for YouBike. For sights outside town, hire a driver, rent a car or take the Tourist Shuttle.' },
+  taroko: { name: 'Taroko', intro: 'A world-famous marble gorge.', localTransport: 'Take the Taiwan Tourist Shuttle Taroko route or hire a driver.' },
+  taitung: { name: 'Taitung', intro: 'Laid-back east coast: rice fields, hot-air balloons and hot springs.', localTransport: 'Sights are spread out; rent a car or join a day tour. Bikes can be rented in Chishang.' },
+  penghu: { name: 'Penghu', intro: 'Islands of basalt cliffs and clear water, famous for summer fireworks.', localTransport: 'Rent a scooter or join a day tour on the main islands; island-hopping needs a boat.' },
+};
+
+const ATTR_EN = {
+  tp101: { name: 'Taipei 101', desc: 'Taipei’s landmark tower; the 89th-floor observatory looks over the whole city.', tip: 'Go up just before sunset to see both the sunset and the night view.' },
+  npm: { name: 'National Palace Museum', desc: 'Hundreds of thousands of Chinese artefacts, including the famous Jadeite Cabbage.', tip: 'Go in the morning to avoid tour groups; rent the audio guide.' },
+  cks: { name: 'Chiang Kai-shek Memorial Hall', desc: 'White memorial hall with a blue roof and a huge square; guard change on the hour.' },
+  xiangshan: { name: 'Elephant Mountain Trail', desc: 'A 20–30 minute climb to the classic Taipei 101 viewpoint.', tip: 'Start about 40 minutes before sunset.' },
+  ximen: { name: 'Ximending', desc: 'Taipei’s youth and fashion district, full of cinemas, shops and snacks.' },
+  dadaocheng: { name: 'Dadaocheng & Dihua Street', desc: 'Century-old shophouses, dried-goods stores and the Xiahai City God Temple; riverside sunsets nearby.' },
+  beitou: { name: 'Beitou Hot Springs', desc: 'A hot-spring town on the MRT; Thermal Valley and the Hot Spring Museum are free.' },
+  yangming: { name: 'Yangmingshan National Park', desc: 'Volcanic landscapes, calla lilies in spring and silver grass in autumn.', tip: 'Mountain weather changes fast; bring a jacket and rain gear.' },
+  huashan: { name: 'Huashan 1914 Creative Park', desc: 'A former winery turned creative park with exhibitions and markets.' },
+  'jiufen-st': { name: 'Jiufen Old Street', desc: 'Red lanterns and teahouses along Shuqi Road are the classic view.', tip: 'Prettiest when the lanterns light up at dusk; very crowded on weekends, so go on a weekday.' },
+  'gold-museum': { name: 'Gold Museum (Jinguashi)', desc: 'Touch a 220 kg gold bar and explore old Japanese-era houses.' },
+  teapot: { name: 'Teapot Mountain Trail', desc: 'Views over the Yin-Yang Sea and the old smelter ruins.' },
+  'tamsui-st': { name: 'Tamsui Old Street', desc: 'Riverside promenade lined with local snacks.' },
+  fort: { name: 'Fort San Domingo', desc: 'Built by the Spanish in the 17th century, later the British consulate.' },
+  fisherman: { name: 'Fisherman’s Wharf & Lover’s Bridge', desc: 'One of the best sunset spots near Taipei.' },
+  shifen: { name: 'Shifen Old Street (sky lanterns)', desc: 'Write a wish on a lantern and release it as the train rolls past.' },
+  'shifen-falls': { name: 'Shifen Waterfall', desc: 'Nicknamed the “Niagara of Taiwan”.' },
+  jingtong: { name: 'Jingtong Station', desc: 'A wooden Japanese-era station and a street hung with wishing bamboo tubes.' },
+  miaokou: { name: 'Keelung Miaokou Night Market', desc: 'A century-old night market around Dianji Temple, lit by rows of yellow lanterns.' },
+  heping: { name: 'Heping Island Geopark', desc: 'Strange sea-eroded rocks and a seawater swimming pool.' },
+  zhengbin: { name: 'Zhengbin Port Colour Houses', desc: 'Brightly painted houses reflected in the harbour.' },
+  jiaoxi: { name: 'Jiaoxi Hot Springs', desc: 'Flat-land hot springs with a free foot bath next to the station.' },
+  ncfta: { name: 'National Center for Traditional Arts', desc: 'Old-style streets, traditional crafts and opera performances.' },
+  lanyang: { name: 'Lanyang Museum', desc: 'A striking tilted building about Yilan’s mountains and sea.' },
+  luodong: { name: 'Luodong Night Market', desc: 'Yilan’s busiest night market.' },
+  daxi: { name: 'Daxi Old Street', desc: 'Baroque-style shopfronts, famous for braised tofu.' },
+  xpark: { name: 'Xpark Aquarium', desc: 'A modern aquarium right next to HSR Taoyuan station.' },
+  chenghuang: { name: 'Hsinchu City God Temple', desc: 'A busy old temple surrounded by street-food stalls.' },
+  neiwan: { name: 'Neiwan Old Street', desc: 'A Hakka mountain town at the end of the Neiwan train line.' },
+  nanliao: { name: 'Nanliao Fishing Harbor', desc: 'Sea breeze, kites and a coastal bike path.' },
+  gaomei: { name: 'Gaomei Wetlands', desc: 'Wind turbines and sunset reflections: Taichung’s best evening view.', tip: 'Check the tide and sunset times before you go.' },
+  opera: { name: 'National Taichung Theater', desc: 'Toyo Ito’s building of flowing curved walls.' },
+  fengjia: { name: 'Fengjia Night Market', desc: 'One of Taiwan’s largest night markets, always inventing new snacks.' },
+  miyahara: { name: 'Miyahara & Shenji New Village', desc: 'A Japanese-era eye clinic turned dessert shop, plus a creative village.' },
+  nmns: { name: 'National Museum of Natural Science', desc: 'Dinosaur halls and a space theatre; great with kids.' },
+  rainbow: { name: 'Rainbow Village', desc: 'A military village covered in colourful paintings.' },
+  'sml-bike': { name: 'Sun Moon Lake Bike Path', desc: 'Once named one of the world’s most beautiful cycling routes.' },
+  'sml-boat': { name: 'Sun Moon Lake boat tour', desc: 'Hop between Shuishe, Xuanguang Temple and Ita Thao piers.' },
+  formosan: { name: 'Formosan Aboriginal Culture Village', desc: 'Theme-park rides plus Indigenous culture shows.' },
+  'ita-thao': { name: 'Ita Thao', desc: 'A Thao Indigenous village with snacks and handicrafts.' },
+  wenhua: { name: 'Wenhua Road Night Market', desc: 'Chiayi’s liveliest street-food strip.' },
+  hinoki: { name: 'Hinoki Village', desc: 'Japanese-era cypress-wood dormitories.' },
+  'npm-south': { name: 'National Palace Museum Southern Branch', desc: 'A branch of the Palace Museum focused on Asian cultures.' },
+  'alishan-forest': { name: 'Alishan Forest Recreation Area', desc: 'Giant-tree boardwalks, Sister Ponds and cherry blossoms in spring.' },
+  zhushan: { name: 'Zhushan sunrise', desc: 'Take the early train up Zhushan for sunrise over the sea of clouds.', tip: 'Sunrise time changes daily; check the train time the night before.' },
+  fenqihu: { name: 'Fenqihu Old Street', desc: 'A stop on the forest railway, famous for railway lunch boxes.' },
+  chihkan: { name: 'Chihkan Tower', desc: 'Remains of the Dutch-era Fort Provintia.' },
+  anping: { name: 'Anping Fort & Old Street', desc: 'Taiwan’s oldest fort and a snack-filled old street.' },
+  shennong: { name: 'Shennong Street', desc: 'Old houses lit up at night, with small independent shops.' },
+  chimei: { name: 'Chimei Museum', desc: 'Western art, musical instruments and arms in a palace-like building.' },
+  sicao: { name: 'Sicao Green Tunnel', desc: 'A bamboo-raft ride through a mangrove tunnel.' },
+  'garden-nm': { name: 'Tainan Garden Night Market', desc: 'Tainan’s biggest night market.', tip: 'Open only on Thursdays, Saturdays and Sundays.' },
+  pier2: { name: 'Pier-2 Art Center', desc: 'Harbour warehouses turned art district.' },
+  cijin: { name: 'Cijin Island', desc: 'Ferry over, ride a bike, eat seafood and watch the sunset.' },
+  lotus: { name: 'Dragon & Tiger Pagodas (Lotus Pond)', desc: 'Enter through the dragon’s mouth and leave through the tiger’s for good luck.' },
+  fgs: { name: 'Fo Guang Shan Buddha Museum', desc: 'A vast Buddhist cultural complex.' },
+  ruifeng: { name: 'Ruifeng Night Market', desc: 'The locals’ favourite night market in Kaohsiung.' },
+  formosa: { name: 'Formosa Boulevard Station (Dome of Light)', desc: 'Often listed among the world’s most beautiful metro stations.' },
+  'kt-street': { name: 'Kenting Main Street', desc: 'Turns into a busy night market after dark.' },
+  eluanbi: { name: 'Eluanbi Lighthouse', desc: 'The white lighthouse at Taiwan’s southern tip.' },
+  nmmba: { name: 'National Museum of Marine Biology and Aquarium', desc: 'An undersea tunnel and beluga whales; a family favourite.' },
+  longpan: { name: 'Longpan Park', desc: 'Coral-reef cliffs over the Pacific; good for stargazing.' },
+  baisha: { name: 'Baisha Bay', desc: 'A white-sand beach for swimming.' },
+  qixingtan: { name: 'Qixingtan Beach', desc: 'A crescent pebble bay; great at sunrise.' },
+  dongdamen: { name: 'Dongdamen Night Market', desc: 'A large night market with an Indigenous food section.' },
+  qingshui: { name: 'Qingshui Cliffs', desc: 'Kilometre-high cliffs dropping straight into the Pacific.', tip: 'Check whether the Suhua Highway and viewpoint are open before going.' },
+  'taroko-np': { name: 'Taroko National Park (open sections)', desc: 'Gorges, tunnels and rivers in a dramatic marble landscape.', tip: 'Some trails and roads are still being repaired after earthquakes; check the national park notices before you go.' },
+  mrbrown: { name: 'Mr. Brown Avenue (Chishang)', desc: 'Endless rice fields; best by bicycle.' },
+  luye: { name: 'Luye Highland', desc: 'Home of the summer hot-air balloon festival.' },
+  sanxiantai: { name: 'Sanxiantai', desc: 'An eight-arch footbridge over the sea; a sunrise spot.' },
+  tiehua: { name: 'Tiehua Music Village', desc: 'Balloon lanterns and live music at night.' },
+  zhiben: { name: 'Zhiben Hot Springs', desc: 'A well-known hot-spring area in the east.' },
+  twinheart: { name: 'Twin Hearts Stone Weir (Qimei)', desc: 'A heart-shaped stone fish trap; take a boat to Qimei.' },
+  bridge: { name: 'Penghu Great Bridge', desc: 'The sea bridge linking Baisha and Xiyu.' },
+  jibei: { name: 'Jibei Sand Tail', desc: 'A white sandbar with water sports.' },
+};
+
+const FOOD_EN = {
+  'taipei:牛肉麵': { name: 'Beef noodle soup', desc: 'Braised or clear broth; Taipei’s signature dish.' },
+  'taipei:小籠包': { name: 'Xiaolongbao (soup dumplings)', desc: 'Thin skins full of hot broth.' },
+  'taipei:滷肉飯': { name: 'Braised pork rice', desc: 'Stewed minced pork over rice; cheap and classic.' },
+  'taipei:士林夜市': { name: 'Shilin Night Market', desc: 'Taipei’s biggest night market: giant fried chicken, pan-fried buns, games.' },
+  'taipei:饒河街觀光夜市': { name: 'Raohe Night Market', desc: 'Famous for the pepper buns at the entrance.' },
+  'taipei:寧夏夜市': { name: 'Ningxia Night Market', desc: 'Traditional Taiwanese snacks: oyster omelette, taro balls.' },
+  'taipei:珍珠奶茶': { name: 'Bubble tea', desc: 'Taiwan’s national drink; choose your sugar and ice level.' },
+  'jiufen:芋圓': { name: 'Taro balls', desc: 'Chewy taro balls over shaved ice or in warm soup.' },
+  'jiufen:草仔粿': { name: 'Herbal rice cake', desc: 'Mugwort dough filled with radish or red bean.' },
+  'jiufen:魚丸湯': { name: 'Fish ball soup', desc: 'A common snack on the old street.' },
+  'tamsui:阿給': { name: 'A-gei', desc: 'Fried tofu stuffed with glass noodles, sealed with fish paste, in sweet chilli sauce.' },
+  'tamsui:鐵蛋': { name: 'Iron eggs', desc: 'Eggs braised and dried until dark and chewy.' },
+  'tamsui:魚酥': { name: 'Fish crisps', desc: 'Crunchy fish-paste snacks.' },
+  'pingxi:雞翅包飯': { name: 'Rice-stuffed chicken wing', desc: 'Deboned wings stuffed with fried rice and grilled.' },
+  'pingxi:花生冰淇淋捲': { name: 'Peanut ice-cream roll', desc: 'Peanut brittle, ice cream and cilantro in a crepe.' },
+  'keelung:鼎邊趖': { name: 'Ding bian cuo', desc: 'Rice-batter noodles in a thick seafood soup.' },
+  'keelung:營養三明治': { name: '“Nutritious” sandwich', desc: 'A fried bun with egg, ham, tomato and mayo.' },
+  'keelung:泡泡冰': { name: 'Paopao ice', desc: 'Hand-whipped, fluffy shaved ice.' },
+  'yilan:三星蔥油餅': { name: 'Sanxing scallion pancake', desc: 'Crispy pancake packed with local scallions.' },
+  'yilan:卜肉': { name: 'Bu rou', desc: 'Battered, deep-fried pork strips.' },
+  'yilan:牛舌餅': { name: 'Ox-tongue biscuits', desc: 'Thin, crisp biscuits; Yilan’s classic souvenir.' },
+  'taoyuan:大溪豆干': { name: 'Daxi braised tofu', desc: 'Firm tofu braised until savoury.' },
+  'taoyuan:客家菜': { name: 'Hakka dishes', desc: 'Salty, fragrant Hakka home cooking.' },
+  'hsinchu:新竹米粉': { name: 'Hsinchu rice noodles', desc: 'Thin, wind-dried rice noodles, fried or in soup.' },
+  'hsinchu:貢丸湯': { name: 'Pork ball soup', desc: 'Bouncy pork meatballs, Hsinchu’s speciality.' },
+  'hsinchu:客家粄條': { name: 'Hakka flat noodles', desc: 'Wide rice noodles from the Hakka hills.' },
+  'taichung:太陽餅': { name: 'Sun cakes', desc: 'Flaky pastry with a malt-sugar filling; Taichung’s souvenir.' },
+  'taichung:珍珠奶茶': { name: 'Bubble tea', desc: 'Taichung claims to be where bubble tea began.' },
+  'taichung:大麵羹': { name: 'Da mian geng', desc: 'Thick alkaline noodles in broth; old-school Taichung.' },
+  'taichung:一中街商圈': { name: 'Yizhong Street', desc: 'A student snack street with low prices.' },
+  'sunmoonlake:日月潭紅茶(台茶18號)': { name: 'Sun Moon Lake black tea (Ruby No. 18)', desc: 'Black tea with natural notes of cinnamon and mint.' },
+  'sunmoonlake:香菇茶葉蛋': { name: 'Mushroom tea eggs', desc: 'The famous tea eggs at Xuanguang Temple.' },
+  'sunmoonlake:總統魚': { name: '“President fish”', desc: 'A local lake fish, usually steamed.' },
+  'chiayi:火雞肉飯': { name: 'Turkey rice', desc: 'Chiayi’s signature: shredded turkey and savoury fat over rice.' },
+  'chiayi:方塊酥': { name: 'Square puff biscuits', desc: 'Layered, crunchy biscuits; a classic souvenir.' },
+  'alishan:奮起湖便當': { name: 'Fenqihu lunch box', desc: 'Old-style railway bento in a metal box.' },
+  'alishan:阿里山高山茶': { name: 'Alishan high-mountain tea', desc: 'Delicate oolong grown at high altitude.' },
+  'tainan:牛肉湯': { name: 'Beef soup', desc: 'Raw local beef cooked by pouring hot broth over it; a Tainan breakfast.' },
+  'tainan:擔仔麵': { name: 'Danzai noodles', desc: 'A small bowl of noodles with minced pork and shrimp.' },
+  'tainan:碗粿': { name: 'Wa-gui (rice pudding)', desc: 'Steamed savoury rice pudding with sauce.' },
+  'tainan:鱔魚意麵': { name: 'Eel noodles', desc: 'Wok-fried eel with noodles, slightly sweet and sour.' },
+  'tainan:蝦捲': { name: 'Shrimp rolls', desc: 'Crispy fried shrimp rolls from Anping.' },
+  'kaohsiung:海鮮': { name: 'Seafood', desc: 'Fresh seafood cooked to order on Cijin.' },
+  'kaohsiung:木瓜牛奶': { name: 'Papaya milk', desc: 'Kaohsiung’s classic drink.' },
+  'kaohsiung:六合夜市': { name: 'Liuhe Night Market', desc: 'The night market most visitors know.' },
+  'kenting:綠豆蒜': { name: 'Mung bean dessert', desc: 'Hengchun’s sweet soup of hulled mung beans.' },
+  'kenting:洋蔥料理': { name: 'Onion dishes', desc: 'Hengchun onions are sweetest in spring.' },
+  'kenting:海鮮': { name: 'Seafood', desc: 'Sashimi at Houbihu harbour is the freshest.' },
+  'hualien:扁食': { name: 'Wontons', desc: 'Hualien-style wontons with thin skins.' },
+  'hualien:炸彈蔥油餅': { name: '“Bomb” scallion pancake', desc: 'Deep-fried scallion pancake with a runny egg inside.' },
+  'hualien:花蓮麻糬': { name: 'Hualien mochi', desc: 'Soft mochi in many flavours; the classic souvenir.' },
+  'taitung:池上便當': { name: 'Chishang lunch box', desc: 'Bento showing off Chishang’s famous rice.' },
+  'taitung:釋迦': { name: 'Sugar apple', desc: 'Taitung’s famous fruit, in season in autumn and winter.' },
+  'taitung:原住民風味餐': { name: 'Indigenous cuisine', desc: 'Wild greens, bamboo-tube rice and mountain pork.' },
+  'penghu:仙人掌冰': { name: 'Cactus-fruit ice', desc: 'Bright pink, sweet and sour ice.' },
+  'penghu:黑糖糕': { name: 'Brown sugar cake', desc: 'Soft, springy cake; Penghu’s souvenir.' },
+  'penghu:海鮮': { name: 'Seafood', desc: 'Squid, sea urchin and Penghu loofah.' },
+};
+
+const SHOP_EN = {
+  阜杭豆漿: { name: 'Fuhang Soy Milk', area: 'Huashan Market 2F · Shandao Temple MRT', note: 'Thick flatbread with egg and savoury soy milk; expect a 30+ minute queue in the morning.' },
+  林東芳牛肉麵: { name: 'Lin Dong Fang Beef Noodles', area: 'Bade Road', note: 'Order half tendon, half beef and add their beef-fat chilli.' },
+  永康牛肉麵: { name: 'Yong Kang Beef Noodles', area: 'Yongkang Street · Dongmen MRT', note: 'A long-running spicy braised beef noodle shop.' },
+  '鼎泰豐 信義店': { name: 'Din Tai Fung (Xinyi Rd original)', area: 'Xinyi Road · Dongmen MRT', note: 'The original store of the soup-dumpling chain; take a queue number online.' },
+  金峰滷肉飯: { name: 'Jin Feng Braised Pork Rice', area: 'Nanchang Road · CKS Memorial Hall MRT', note: 'Cheap and fast, with a queue that moves quickly.' },
+  福州世祖胡椒餅: { name: 'Fuzhou Pepper Buns', area: 'Raohe Night Market entrance · Songshan MRT', note: 'Charcoal-oven pepper buns; wait for a fresh batch.' },
+  阿柑姨芋圓: { name: 'A-Gan-Yi Taro Balls', area: 'Off Shuqi Road, Jiufen', note: 'Seats with mountain and sea views.' },
+  賴阿婆芋圓: { name: 'Grandma Lai’s Taro Balls', area: 'Jishan Street, Jiufen', note: 'A long-running handmade taro ball shop.' },
+  淡水文化阿給: { name: 'Tamsui Wenhua A-gei', area: 'Zhenli Street', note: 'One of the original a-gei shops.' },
+  三協成: { name: 'San Xie Cheng Bakery', area: 'Zhongzheng Road, Tamsui', note: 'A century-old pastry shop.' },
+  李鵠餅店: { name: 'Li Hu Bakery', area: 'Ren 3rd Road, near Miaokou', note: 'Century-old bakery: pineapple cakes and mung bean pastries.' },
+  黃日香豆干: { name: 'Huang Ri Xiang Tofu', area: 'Heping Old Street, Daxi', note: 'The best-known Daxi braised tofu brand.' },
+  '春水堂 四維創始店': { name: 'Chun Shui Tang (Siwei original)', area: 'Siwei Street', note: 'One of the tea houses credited with inventing bubble tea.' },
+  宮原眼科: { name: 'Miyahara', area: 'Zhongshan Road, by Taichung Station', note: 'Ice cream and gift boxes in a beautiful old building.' },
+  陳允寶泉: { name: 'Chen Yun Pao Chuan', area: 'Several stores in Taichung', note: 'A century-old sun cake maker.' },
+  玄光寺阿婆茶葉蛋: { name: 'Grandma’s Tea Eggs at Xuanguang Temple', area: 'Xuanguang Temple pier', note: 'Grab some on your boat tour.' },
+  噴水火雞肉飯: { name: 'Pen Shui Turkey Rice', area: 'Zhongzheng Road (fountain roundabout)', note: 'The most famous turkey rice shop.' },
+  劉里長雞肉飯: { name: 'Liu Li Zhang Chicken Rice', area: 'Gongming Road', note: 'Where locals queue for turkey rice.' },
+  阿堂鹹粥: { name: 'A-Tang Savoury Porridge', area: 'Ximen Road', note: 'Milkfish porridge from early morning until late morning.' },
+  六千牛肉湯: { name: 'Liu Qian Beef Soup', area: 'Haian Road', note: 'Opens at dawn and closes when sold out.' },
+  阿村第二代牛肉湯: { name: 'A-Cun Beef Soup', area: 'Baoan Road', note: 'Famous beef soup, open until about midday.' },
+  富盛號碗粿: { name: 'Fu Sheng Hao Wa-gui', area: 'Ximen Road, near Chihkan Tower', note: 'A long-established rice pudding shop.' },
+  '度小月擔仔麵 原始店': { name: 'Du Hsiao Yueh Danzai Noodles (original)', area: 'Zhongzheng Road', note: 'Where danzai noodles began.' },
+  周氏蝦捲: { name: 'Chou’s Shrimp Rolls', area: 'Anping Road', note: 'Anping’s signature snack.' },
+  興隆居: { name: 'Xing Long Ju', area: 'Liuhe 2nd Road', note: 'An old breakfast shop for soup buns and flatbread.' },
+  港園牛肉麵: { name: 'Gang Yuan Beef Noodles', area: 'Dacheng Street, Yancheng', note: 'Famous for dry-mixed beef noodles.' },
+  高雄婆婆冰: { name: 'Popo Ice', area: 'Qixian 3rd Road, Yancheng', note: 'An old fruit shaved-ice shop.' },
+  阿伯綠豆饌: { name: 'A-Bo Mung Bean Dessert', area: 'Hengchun', note: 'A long-running mung bean dessert shop.' },
+  戴記扁食: { name: 'Dai Ji Wontons', area: 'Zhonghua Road', note: 'One of Hualien’s signature wonton shops.' },
+  液香扁食: { name: 'Yi Xiang Wontons', area: 'Xinyi Street', note: 'An old wonton shop with a clear, sweet broth.' },
+  曾記麻糬: { name: 'Tseng Chi Mochi', area: 'Several stores in Hualien', note: 'The best-known mochi souvenir brand.' },
+  悟饕池上飯包文化故事館: { name: 'Wu Tao Chishang Lunch Box Museum', area: 'Chishang', note: 'Lunch boxes plus a small rice-culture exhibit.' },
+  全美行: { name: 'Chuan Mei Hang', area: 'Chishang', note: 'A long-established Chishang lunch box shop.' },
+};
+
+const LINE_EN = {
+  台灣高鐵: 'Taiwan High Speed Rail (HSR)',
+  台鐵區間車: 'TRA local train',
+  台鐵自強號: 'TRA Tze-Chiang express',
+  '台鐵(瑞芳轉平溪線)': 'TRA via Ruifang + Pingxi line',
+  台鐵南迴線: 'TRA South-Link line',
+  '台鐵普悠瑪/太魯閣號': 'TRA Puyuma / Taroko express',
+  '桃園機場捷運(直達車)': 'Taoyuan Airport MRT (express)',
+  桃園機場捷運: 'Taoyuan Airport MRT',
+  台北捷運淡水信義線: 'Taipei MRT Red Line (Tamsui-Xinyi)',
+  '基隆客運 1062': 'Keelung Bus 1062',
+  '基隆客運 788': 'Keelung Bus 788',
+  '葛瑪蘭客運(國道5號)': 'Kamalan Bus (Freeway 5)',
+  國道客運: 'Intercity bus',
+  '南投客運 6670(高鐵台中站發車)': 'Nantou Bus 6670 (from HSR Taichung)',
+  '台灣好行 7322 阿里山線': 'Taiwan Tourist Shuttle 7322 (Alishan)',
+  '墾丁快線(高鐵左營站發車)': 'Kenting Express (from HSR Zuoying)',
+  '台灣好行 太魯閣線': 'Taiwan Tourist Shuttle (Taroko)',
+  '國內線班機(松山—馬公)': 'Domestic flight (Songshan–Magong)',
+  '國內線班機(小港—馬公)': 'Domestic flight (Kaohsiung–Magong)',
+  '布袋港—馬公 客輪': 'Ferry (Budai–Magong)',
+};
+
+const TIP_EN = {
+  '瑞芳站轉乘平溪線,可買平溪線一日週遊券。': 'Change to the Pingxi line at Ruifang; a Pingxi line day pass is available.',
+  '東部幹線熱門,假日車票常需提前 28 天搶訂。': 'East-coast trains sell out; weekend tickets often need booking 28 days ahead.',
+  'A18 高鐵桃園站可直接轉乘高鐵。': 'Change to the HSR at Airport MRT A18 (HSR Taoyuan).',
+  '忠孝復興站 2 號出口附近搭車,假日排隊人潮多。': 'Board near Exit 2 of MRT Zhongxiao Fuxing; long queues on weekends.',
+  '假日雪隧易塞車,時間可能加倍。': 'Weekend traffic in the Snow Mountain tunnel can double the time.',
+  '也可搭阿里山林業鐵路,車票熱門需提早預訂。': 'You can also take the Alishan Forest Railway; book early, it sells out.',
+  '部分路段可能因修復而管制,請先查詢公告。': 'Some sections may be closed for repairs; check notices first.',
+  '時間含報到與機場接駁約 1 小時,飛行約 50 分鐘。': 'Includes about 1 hour for airport transfer and check-in; flight about 50 min.',
+  '時間含報到與機場接駁約 1 小時,飛行約 40 分鐘。': 'Includes about 1 hour for airport transfer and check-in; flight about 40 min.',
+  '含前往布袋港時間,航程約 90 分鐘;夏季航班較多,冬季東北季風常停航。': 'Includes getting to Budai port; about 90 min at sea. More sailings in summer; often cancelled in winter winds.',
+};
+
+// Language switching (English first, Traditional Chinese second).
+
+let lang = 'en';
+const getLang = () => lang;
+const setLang = (l) => { lang = l === 'zh' ? 'zh' : 'en'; };
+const en = () => lang === 'en';
+
+const UI = {
+  tabGuide: ['Guide', '導遊'], tabPlan: ['Plan', '行程'], tabTransit: ['Transit', '交通'], tabEat: ['Eat & Play', '吃喝玩樂'], tabHelp: ['Help', '救急'],
+  askTitle: ['💬 Ask your local buddy', '💬 問問小導遊'],
+  askPlaceholder: ['e.g. What should I eat in Tainan?', '例:花蓮三天怎麼玩?'],
+  send: ['Send', '送出'], answering: ['Answering…', '回答中…'], thinking: ['Thinking…', '思考中…'],
+  byClaude: ['✨ Answered by Claude', '✨ 由 Claude 回答'], offline: ['Offline guide', '離線導遊'],
+  cutOff: ['(The answer was cut off)', '(回答中斷了)'],
+  busy: ['Lots of people are asking right now. Here is the offline answer:', '現在問的人太多了,先給你離線版的回答:'],
+  flaky: ['The connection is unstable. Here is the offline answer:', '連線不太順,先給你離線版的回答:'],
+  recTitle: ['✨ Recommended for you', '✨ 導遊推薦'],
+  recHint: ['Pick what you like and I’ll suggest the best spots.', '選擇你的旅遊偏好,我會推薦最適合的景點。'],
+  region: ['Region', '地區'], allTaiwan: ['All of Taiwan', '全台灣'],
+  noMatch: ['No matching spots', '沒有符合的景點'],
+  nearTitle: ['📍 What’s near me?', '📍 我附近有什麼?'], useLocation: ['Use my location', '使用我的位置'],
+  locating: ['Locating…', '定位中…'], noGeo: ['Location isn’t available on this device.', '此裝置不支援定位。'],
+  geoFail: ['Couldn’t get your location. Check that location access is allowed.', '無法取得位置,請確認已允許定位權限。'],
+  stay: ['Suggested stay', '建議停留'], hours: ['h', '小時'], away: ['away', '距離'],
+  openMap: ['🗺️ Open map', '🗺️ 開啟地圖'], showLocal: ['🀄 Show to driver', '🀄 給司機看'],
+  save: ['Save', '收藏'],
+  planTitle: ['🗓️ Plan my trip', '🗓️ 幫我排行程'], start: ['Starting point', '出發地'], days: ['Days', '天數'],
+  day: ['day', '天'], daysN: ['days', '天'], pace: ['Pace', '步調'],
+  paceHint: ['(about {h} h a day)', '(每天約 {h} 小時)'],
+  prefs: ['Interests (optional; leave empty for the classics)', '旅遊偏好(可複選,不選則推薦熱門景點)'],
+  returnStart: ['Return to the starting point on the last day', '最後一天回到出發地'],
+  makePlan: ['Make my plan', '產生行程'], free: ['Free time', '自由活動'], tonight: ['🏨 Stay tonight:', '🏨 今晚住宿:'],
+  planNote: ['Times are estimates based on typical visit length and travel time. Check opening hours and weather.', '行程由系統依景點停留時間與交通時間自動估算,實際請依營業時間與天氣彈性調整。'],
+  move: ['Travel:', '移動:'], foodPick: ['🍽️ Try:', '🍽️ 美食推薦:'], map: ['Map', '地圖'],
+  transitTitle: ['🚆 Getting around', '🚆 交通路線規劃'], from: ['From', '從'], to: ['To', '到'], swap: ['⇅ Swap', '⇅ 交換'],
+  search: ['Find routes', '搜尋路線'], noRoute: ['No public transport found. You may need a car or a driver.', '找不到路線,可能需要租車或包車前往。'],
+  fareNote: ['Fares and times are estimates. Check the official HSR, TRA and bus timetables.', '票價與時間為參考值,班次請以台灣高鐵、台鐵、客運公司公告為準。'],
+  arrived: ['🚏 Once you arrive in {p}', '🚏 到了{p}之後'],
+  transfers: ['{n} transfer(s)', '轉乘 {n} 次'], total: ['Total time', '總時間'], fare: ['Est. fare', '參考票價'],
+  changeAt: ['↻ Change at {p} (allow about {m} min)', '↻ 於{p}轉乘(預留約 {m} 分鐘)'],
+  timetable: ['Timetable / tickets', '查時刻/訂票'], liveTransit: ['🗺️ Live departures on Google Maps', '🗺️ 用 Google 地圖查即時班次'],
+  about: ['about', '約'],
+  eatTitle: ['🍜 Eat & play', '🍜 吃喝玩樂'], eats: ['😋 What to eat', '😋 好吃的'], fun: ['🎡 What to do', '🎡 好玩的'],
+  noFood: ['Mostly nature here; eat in the nearest town.', '這裡以自然景觀為主,建議回到鄰近市區用餐。'],
+  hub: ['Transport hub', '此地為交通轉運點'], findShops: ['Find shops nearby', '找附近店家'],
+  shopsTitle: ['📍 Local favourites', '📍 在地名店'],
+  shopsHint: ['Long-loved local shops. Ratings change, so tap “Google rating” for the latest stars, reviews and hours.', '長年口碑老店。評分會變動,點「看 Google 評分」可看最新星等、評論與營業時間。'],
+  googleRating: ['⭐ Google rating', '⭐ 看 Google 評分'],
+  savedTitle: ['⭐ Saved spots', '⭐ 我的收藏'], savedEmpty: ['Nothing saved yet. Tap ☆ on any spot.', '還沒有收藏景點,在推薦清單點 ☆ 加入吧!'],
+  chain: ['🧭 Route through your saved spots', '🧭 串聯路線(依收藏順序)'], remove: ['Remove', '移除'], needCar: ['a car is best', '建議租車'],
+  helpTitle: ['🆘 Help', '🆘 救急'],
+  photoTitle: ['📸 Translate a menu or sign', '📸 拍照翻譯菜單、招牌'],
+  photoHint: ['Take or choose a photo; I’ll translate it and point out meat, seafood, spice and common allergens.', '拍照或選一張照片,我會翻譯並標出肉類、海鮮、辣度與常見過敏原。'],
+  photoBtn: ['Choose photo', '選擇照片'], photoNone: ['Photo translation needs Claude and isn’t available here. Try the phrase cards below.', '這裡無法使用照片翻譯(需要 Claude),可以先用下方的句卡。'],
+  phrasesTitle: ['🗣️ Show-the-vendor cards', '🗣️ 給店家看的句卡'],
+  phrasesHint: ['Tap a card to show it full screen.', '點一下卡片就會全螢幕顯示。'],
+  customTitle: ['✍️ Make your own card', '✍️ 自己做一張句卡'], customPlaceholder: ['e.g. Can I have this without pork?', '例:可以不要加豬肉嗎?'],
+  make: ['Make card', '產生'],
+  teaTitle: ['🧋 Order bubble tea', '🧋 點一杯珍奶'], sugar: ['Sugar', '甜度'], ice: ['Ice', '冰塊'], topping: ['Topping', '配料'],
+  showCard: ['Show card', '顯示卡片'],
+  tipsTitle: ['💡 Things locals wish you knew', '💡 在地人想告訴你的事'],
+  sosTitle: ['🚨 Emergency', '🚨 緊急電話'],
+  tapClose: ['Tap anywhere to close', '點任意處關閉'],
+  tryAgain: ['Couldn’t make it this time. Try again in a moment.', '這次沒有成功,請稍後再試。'],
+  examples: [['Taipei to Tainan: how long?', 'What should I eat in Tainan?', '3 days in Hualien?', 'Best sunset spot?'],
+    ['台南早餐吃什麼?', '台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?']],
+  langToggle: ['中文', 'EN'],
+};
+
+function t(key, vars = {}) {
+  const v = UI[key];
+  if (!v) return key;
+  let s = en() ? v[0] : v[1];
+  if (typeof s === 'string') for (const [k, x] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, x);
+  return s;
+}
+
+// ---- data helpers: English name first, Chinese kept for showing locals ----
+const dName = (id) => (en() ? DEST_EN[id]?.name : null) ?? getDestination(id)?.name ?? id;
+const dIntro = (d) => (en() ? DEST_EN[d.id]?.intro : null) ?? d.intro;
+const dLocal = (d) => (en() ? DEST_EN[d.id]?.localTransport : null) ?? d.localTransport;
+const aName = (a) => (en() ? ATTR_EN[a.id]?.name : null) ?? a.name;
+const aDesc = (a) => (en() ? ATTR_EN[a.id]?.desc : null) ?? a.desc;
+const aTip = (a) => (a.tip ? (en() ? ATTR_EN[a.id]?.tip : null) ?? a.tip : '');
+const fName = (destId, f) => (en() ? FOOD_EN[`${destId}:${f.name}`]?.name : null) ?? f.name;
+const fDesc = (destId, f) => (en() ? FOOD_EN[`${destId}:${f.name}`]?.desc : null) ?? f.desc;
+const fType = (type) => (en() ? FOOD_TYPE_EN[type] : null) ?? type;
+const sName = (x) => (en() ? SHOP_EN[x.name]?.name : null) ?? x.name;
+const sArea = (x) => (en() ? SHOP_EN[x.name]?.area : null) ?? x.area;
+const sNote = (x) => (en() ? SHOP_EN[x.name]?.note : null) ?? x.note;
+const lineName = (zh) => (en() ? LINE_EN[zh] : null) ?? zh;
+const tipText = (zh) => (en() ? TIP_EN[zh] : null) ?? zh;
+const regionName = (r) => (en() ? REGION_EN[r] : null) ?? r;
+const interestName = (k, zhLabel) => (en() ? INTEREST_EN[k] : null) ?? zhLabel;
+
+// "Taipei 101 (台北101)": English plus the Chinese that locals can read
+const withZh = (enName, zh) => (en() && enName !== zh ? `${enName} (${zh})` : zh);
+
+function duration(min) {
+  const m = Math.round(min);
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (en()) return m < 60 ? `${m} min` : r ? `${h} h ${r} min` : `${h} h`;
+  return m < 60 ? `${m} 分鐘` : r ? `${h} 小時 ${r} 分` : `${h} 小時`;
+}
+
 // 交通路線規劃:在路網上以 Dijkstra 演算法找出最佳路線。
 
 const TRANSFER_MINUTES = 15; // 每次轉乘預估的等車/步行時間
@@ -934,60 +1319,83 @@ function generateItinerary({ start, days, interests = [], pace = 'normal', retur
   return plan;
 }
 
-// 「問導遊」離線版:以關鍵字理解旅客問題,回覆景點、美食、交通與行程建議。
-// 在 claude.ai 上開啟時會改由 Claude 回答(見 js/ai-guide.js),這裡是沒有網路或無法使用 AI 時的備援。
+// Offline guide: understands common questions (English or Chinese) by keywords and answers from the app's data.
+// On claude.ai, Claude answers instead (js/ai-guide.js); this is the fallback when AI isn't available.
 
 const INTENT_WORDS = {
   route: ['怎麼去', '怎麼到', '怎麼過去', '怎麼前往', '怎麼走', '交通', '搭什麼', '坐什麼', '搭車', '坐車', '搭哪', '坐哪',
-    '路線', '多久', '多遠', '車程', '要搭', '要坐', '高鐵', '火車', '客運', '票價', '多少錢'],
-  plan: ['行程', '怎麼玩', '怎麼排', '安排', '幾天', '日遊'],
-  food: ['吃', '美食', '小吃', '餐廳', '夜市', '好吃', '伴手禮', '喝', '早餐', '宵夜', '海鮮'],
-  play: ['玩', '景點', '去哪', '推薦', '好玩', '逛', '看', '走走'],
+    '路線', '多久', '多遠', '車程', '要搭', '要坐', '高鐵', '火車', '客運', '票價', '多少錢',
+    'how do i get', 'how to get', 'get to', 'getting to', 'how long', 'how far', 'train', 'bus', 'hsr', 'transport', 'fare', 'ticket', 'travel from'],
+  plan: ['行程', '怎麼玩', '怎麼排', '安排', '幾天', '日遊', 'itinerary', 'plan', 'schedule', 'day trip'],
+  food: ['吃', '美食', '小吃', '餐廳', '夜市', '好吃', '伴手禮', '喝', '早餐', '宵夜', '海鮮',
+    'eat', 'food', 'restaurant', 'night market', 'breakfast', 'snack', 'drink', 'dessert', 'souvenir', 'seafood', 'hungry', 'dinner', 'lunch'],
+  play: ['玩', '景點', '去哪', '推薦', '好玩', '逛', '看', '走走', 'what to do', 'things to', 'see', 'visit', 'places', 'recommend', 'where', 'fun', 'sightseeing', 'first time'],
 };
 
 const INTEREST_WORDS = {
-  室內: ['下雨', '雨天', '室內', '太熱', '冷氣'],
-  親子: ['親子', '小孩', '孩子', '小朋友', '家庭', '帶爸媽'],
-  溫泉: ['溫泉', '泡湯'],
-  海邊: ['海邊', '海灘', '玩水', '島', '看海'],
-  登山: ['爬山', '登山', '步道', '健行'],
-  夜景: ['夜景', '晚上', '夜晚'],
-  老街: ['老街'],
-  文化: ['歷史', '古蹟', '文化', '博物館', '廟', '藝術'],
-  自然: ['自然', '風景', '大自然', '森林', '湖'],
-  拍照: ['拍照', '打卡', 'ig', 'IG', '網美'],
-  購物: ['購物', '逛街', '買'],
+  室內: ['下雨', '雨天', '室內', '太熱', '冷氣', 'rain', 'indoor'],
+  親子: ['親子', '小孩', '孩子', '小朋友', '家庭', '帶爸媽', 'kid', 'children', 'family'],
+  溫泉: ['溫泉', '泡湯', 'hot spring', 'onsen'],
+  海邊: ['海邊', '海灘', '玩水', '島', '看海', 'beach', 'island', 'swim'],
+  登山: ['爬山', '登山', '步道', '健行', 'hike', 'hiking', 'trail'],
+  夜景: ['夜景', '晚上', '夜晚', 'night view', 'at night', 'evening'],
+  老街: ['老街', 'old street'],
+  文化: ['歷史', '古蹟', '文化', '博物館', '廟', '藝術', 'history', 'temple', 'museum', 'culture', 'art'],
+  自然: ['自然', '風景', '大自然', '森林', '湖', 'nature', 'scenery', 'forest', 'lake'],
+  拍照: ['拍照', '打卡', '網美', 'photo', 'instagram'],
+  購物: ['購物', '逛街', '買', 'shopping'],
 };
 
-// 資料裡沒有對應標籤、但常被問到的關鍵字:直接在景點名稱與介紹裡找
+// Common asks that aren't tags: searched in the Chinese names and descriptions
 const FREE_WORDS = ['夕陽', '日落', '日出', '雲海', '天燈', '夜市', '瀑布', '單車', '自行車', '燈塔', '熱氣球', '原住民', '櫻花', '海鮮'];
-const WORD_SYNONYMS = { 日落: '夕陽', 黃昏: '夕陽', 自行車: '單車', 騎車: '單車', 腳踏車: '單車' };
+const WORD_SYNONYMS = {
+  日落: '夕陽', 黃昏: '夕陽', 自行車: '單車', 騎車: '單車', 腳踏車: '單車',
+  sunset: '夕陽', sunrise: '日出', 'sea of clouds': '雲海', lantern: '天燈', waterfall: '瀑布', cycling: '單車', bike: '單車',
+  lighthouse: '燈塔', balloon: '熱氣球', indigenous: '原住民', aboriginal: '原住民', 'cherry blossom': '櫻花',
+};
+const WORD_EN = { 夕陽: 'the sunset', 日出: 'the sunrise', 雲海: 'the sea of clouds', 天燈: 'sky lanterns', 瀑布: 'waterfalls', 單車: 'cycling', 燈塔: 'lighthouses', 熱氣球: 'hot-air balloons', 原住民: 'Indigenous culture', 櫻花: 'cherry blossoms' };
+const FOOD_WORDS = { 海鮮: '海鮮', 夜市: '夜市', 伴手禮: '伴手禮', 甜點: '甜點', 飲品: '飲品', 早餐: '早餐', seafood: '海鮮', 'night market': '夜市', souvenir: '伴手禮', dessert: '甜點', drink: '飲品', breakfast: '早餐' };
+const REGION_WORDS = { north: '北部', central: '中部', south: '南部', east: '東部', islands: '離島' };
 
-const CN_NUM = { 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7 };
+const NUM = { 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7 };
 
-function findDestinations(text) {
+const EN_ALIASES = {
+  taipei: ['taipei', 'beitou', 'yangmingshan'], jiufen: ['jiufen', 'jinguashi'], tamsui: ['tamsui', 'danshui'],
+  pingxi: ['pingxi', 'shifen'], keelung: ['keelung'], yilan: ['yilan', 'jiaoxi', 'luodong'], taoyuan: ['taoyuan', 'daxi'],
+  airport: ['airport', 'taoyuan airport'], hsinchu: ['hsinchu'], taichung: ['taichung'], sunmoonlake: ['sun moon lake', 'nantou'],
+  chiayi: ['chiayi'], alishan: ['alishan'], tainan: ['tainan', 'anping'], kaohsiung: ['kaohsiung', 'zuoying', 'cijin'],
+  kenting: ['kenting', 'hengchun', 'pingtung'], hualien: ['hualien'], taroko: ['taroko'], taitung: ['taitung', 'chishang'], penghu: ['penghu', 'magong'],
+};
+
+function findDestinations(raw) {
+  const text = String(raw).toLowerCase();
   const hits = [];
   for (const d of DESTINATIONS) {
-    for (const n of [d.name, ...d.aliases]) {
-      for (let p = text.indexOf(n); p >= 0; p = text.indexOf(n, p + 1)) {
-        hits.push({ id: d.id, start: p, end: p + n.length });
+    for (const n of [d.name, ...d.aliases, ...(EN_ALIASES[d.id] ?? [])]) {
+      const key = n.toLowerCase();
+      for (let p = text.indexOf(key); p >= 0; p = text.indexOf(key, p + 1)) {
+        hits.push({ id: d.id, start: p, end: p + key.length });
       }
     }
   }
-  // 較長的名稱優先(「桃園機場」不應同時被判成「桃園」)
+  // Longer names win ("桃園機場" / "taoyuan airport" is not also "桃園")
   const kept = hits.filter((h) => !hits.some((o) => o !== h && o.id !== h.id
     && o.start <= h.start && o.end >= h.end && o.end - o.start > h.end - h.start));
-  // 依出現順序排列,「從A到B」才能判斷方向
+  // Order of appearance gives direction for "from A to B"
   return kept.sort((x, y) => x.start - y.start).map((h) => h.id).filter((id, i, arr) => arr.indexOf(id) === i);
 }
 
 function parseDays(text) {
-  const m = text.match(/([1-7一二兩三四五六七])\s*[天日]/);
+  const m = String(text).toLowerCase().match(/([1-7一二兩三四五六七]|one|two|three|four|five|six|seven)\s*(?:[天日]|-?\s*days?\b)/);
   if (!m) return null;
-  return CN_NUM[m[1]] ?? Number(m[1]);
+  return NUM[m[1]] ?? Number(m[1]);
 }
 
-const has = (text, words) => words.some((w) => text.includes(w));
+// English words match at a word start ("rain" must not match "train"); Chinese matches anywhere
+const has = (text, words) => words.some((w) => (/^[a-z ]+$/.test(w)
+  ? new RegExp(`\\b${w}`).test(text) : text.includes(w.toLowerCase())));
+const L = (enText, zhText) => (getLang() === 'en' ? enText : zhText);
+const place = (id) => withZh(dName(id), getDestination(id).name);
 
 function searchText(word) {
   return DESTINATIONS.flatMap((d) => d.attractions
@@ -995,17 +1403,20 @@ function searchText(word) {
     .map((a) => ({ ...a, destName: d.name, destId: d.id })));
 }
 
+const spotLine = (a) => `・${withZh(aName(a), a.name)} — ${dName(a.destId)}: ${aDesc(a)}${aTip(a) ? ` 💡${aTip(a)}` : ''}`;
+
 function routeAnswer(from, to, assumedFrom) {
   const routes = planAlternatives(from, to);
-  if (!routes.length) return { text: `目前資料裡還找不到${placeName(from)}到${placeName(to)}的大眾運輸,建議租車或包車。` };
+  if (!routes.length) return { text: L(`I couldn't find public transport from ${dName(from)} to ${dName(to)}. A car or driver is best.`, `目前資料裡還找不到${dName(from)}到${dName(to)}的大眾運輸,建議租車或包車。`) };
+  const labelEn = { 最快: 'Fastest', 最省錢: 'Cheapest', 最少轉乘: 'Fewest transfers' };
   const lines = routes.map((r) => {
-    const steps = r.legs.map((l) => `${l.name}(${placeName(l.from)}→${placeName(l.to)} 約 ${formatDuration(l.min)})`).join(' → ');
-    return `【${r.labels.join('/')}】約 ${formatDuration(r.totalMin)}、NT$${r.totalFare}\n  ${steps}`;
+    const steps = r.legs.map((l) => `${lineName(l.name)} (${dName(l.from)} → ${dName(l.to)}, ${L('about', '約')} ${duration(l.min)})`).join(' → ');
+    const labels = r.labels.map((x) => L(labelEn[x] ?? x, x)).join('/');
+    return `【${labels}】${L('about', '約')} ${duration(r.totalMin)}, NT$${r.totalFare}\n  ${steps}`;
   });
-  const head = assumedFrom ? `我先假設你從台北出發(可以跟我說「從高雄到${placeName(to)}」換出發地):\n` : '';
-  const local = getDestination(to).localTransport;
+  const head = assumedFrom ? L(`Assuming you start in Taipei (tell me e.g. "from Kaohsiung to ${dName(to)}" to change it):\n`, `我先假設你從台北出發(可以跟我說「從高雄到${dName(to)}」換出發地):\n`) : '';
   return {
-    text: `${head}${placeName(from)}到${placeName(to)}有這些走法:\n${lines.join('\n')}\n\n🚏 到了之後:${local}\n(時間票價為參考值)`,
+    text: `${head}${L(`${dName(from)} to ${place(to)}:`, `${dName(from)}到${dName(to)}有這些走法:`)}\n${lines.join('\n')}\n\n🚏 ${L('When you arrive', '到了之後')}: ${dLocal(getDestination(to))}\n${L('(Times and fares are estimates)', '(時間票價為參考值)')}`,
     action: { type: 'route', from, to },
   };
 }
@@ -1013,169 +1424,194 @@ function routeAnswer(from, to, assumedFrom) {
 function planAnswer(start, days, interests, stayInRegion) {
   const plan = generateItinerary({ start, days, interests, returnToStart: false, stayInRegion });
   const lines = plan.map((d) => {
-    if (!d.items.length) return `Day ${d.day}:自由活動,可以再深度探索或安排 SPA、咖啡廳(住${d.stayAt})`;
-    const parts = d.items.map((i) => (i.type === 'travel' ? `🚆前往${placeName(i.to)}` : i.type === 'food' ? `🍽️${i.name}` : i.name));
-    return `Day ${d.day}:${parts.join(' → ')}(住${d.stayAt})`;
+    const stayId = DESTINATIONS.find((x) => x.name === d.stayAt)?.id;
+    const stay = stayId ? dName(stayId) : d.stayAt;
+    if (!d.items.length) return L(`Day ${d.day}: free time; explore more slowly or find a café (stay in ${stay})`, `Day ${d.day}:自由活動,可以再深度探索或安排 SPA、咖啡廳(住${stay})`);
+    const parts = d.items.map((i) => (i.type === 'travel' ? `🚆${L('to', '前往')} ${dName(i.to)}`
+      : i.type === 'food' ? `🍽️${withZh(fName(i.destId, i), i.name)}` : withZh(aName(i), i.name)));
+    return `Day ${d.day}: ${parts.join(' → ')} (${L('stay in', '住')} ${stay})`;
   });
   return {
-    text: `幫你排了 ${days} 天的${placeName(start)}出發行程:\n${lines.join('\n')}\n\n想調整步調或偏好,可以到「行程」分頁細修。`,
+    text: `${L(`Here's a ${days}-day plan from ${dName(start)}:`, `幫你排了 ${days} 天的${dName(start)}出發行程:`)}\n${lines.join('\n')}\n\n${L('Fine-tune the pace and interests in the Plan tab.', '想調整步調或偏好,可以到「行程」分頁細修。')}`,
     action: { type: 'plan', start, days, interests },
   };
 }
 
-function askGuide(question) {
-  const text = question.trim();
+function askGuide(question, lang = getLang()) {
+  const prev = getLang();
+  setLang(lang);
+  try {
+    return answer(question.trim());
+  } finally {
+    setLang(prev);
+  }
+}
+
+function answer(text) {
   if (!text) return greet();
-
+  const lower = text.toLowerCase();
   const dests = findDestinations(text);
-  const region = REGIONS.find((r) => text.includes(r));
-  const interests = Object.entries(INTEREST_WORDS).filter(([, ws]) => has(text, ws)).map(([k]) => k);
+  const region = REGIONS.find((r) => text.includes(r)) ?? Object.entries(REGION_WORDS).find(([w]) => new RegExp(`\\b${w}\\b`).test(lower))?.[1];
+  const interests = Object.entries(INTEREST_WORDS).filter(([, ws]) => has(lower, ws)).map(([k]) => k);
   const days = parseDays(text);
-  const wantsRoute = has(text, INTENT_WORDS.route) || (dests.length >= 2 && /從|到|去/.test(text));
+  const wantsRoute = has(lower, INTENT_WORDS.route) || (dests.length >= 2 && (/從|到|去/.test(text) || /\b(from|to)\b/.test(lower)));
 
-  // 交通:「從台北到台南怎麼去」「台北去台南要多久」「去日月潭要搭什麼車」
+  // Transport: "Taipei to Tainan how long", "how do I get to Sun Moon Lake", 「台北去台南要多久」
   if (wantsRoute && !days) {
     if (dests.length >= 2) return routeAnswer(dests[0], dests[1]);
     if (dests.length === 1 && dests[0] !== 'taipei') return routeAnswer('taipei', dests[0], true);
   }
 
-  // 行程:「花蓮三天怎麼玩」「幫我排台南兩天行程」
-  if (days || has(text, INTENT_WORDS.plan)) {
-    // 有指定地點就留在那一區玩;沒指定就從台北出發環島
+  // Itinerary: "3 days in Hualien", 「花蓮三天怎麼玩」
+  if (days || has(lower, INTENT_WORDS.plan)) {
     return planAnswer(dests[0] ?? 'taipei', Math.min(days ?? 2, 7), interests, Boolean(dests[0]));
   }
 
   const dest = dests[0] ? getDestination(dests[0]) : null;
 
-  // 特定關鍵字:夕陽、日出、天燈…
-  const free = [...FREE_WORDS, ...Object.keys(WORD_SYNONYMS)].find((w) => text.includes(w));
+  // Keywords: sunset, sunrise, lanterns…
+  const free = [...FREE_WORDS, ...Object.keys(WORD_SYNONYMS)].find((w) => has(lower, [w]));
   if (free && free !== '海鮮' && free !== '夜市') {
     const word = WORD_SYNONYMS[free] ?? free;
     let spots = searchText(word);
     if (dest) spots = spots.filter((a) => a.destId === dest.id).concat(spots.filter((a) => a.destId !== dest.id));
     if (spots.length) {
-      return { text: `想看${word},推薦這些地方:\n${spots.slice(0, 5).map((a) => `・${a.name}(${a.destName}):${a.desc}${a.tip ? ` 💡${a.tip}` : ''}`).join('\n')}` };
+      return { text: `${L(`Best places for ${WORD_EN[word] ?? word}:`, `想看${word},推薦這些地方:`)}\n${spots.slice(0, 5).map(spotLine).join('\n')}` };
     }
   }
 
-  // 美食
-  if (has(text, INTENT_WORDS.food)) {
-    const foodWord = ['海鮮', '夜市', '伴手禮', '甜點', '飲品', '早餐'].find((w) => text.includes(w));
-    const match = (f) => !foodWord || f.name.includes(foodWord) || f.type.includes(foodWord) || f.desc.includes(foodWord)
-      || (foodWord === '早餐' && f.desc.includes('早餐'));
+  // Food
+  if (has(lower, INTENT_WORDS.food)) {
+    const fw = Object.keys(FOOD_WORDS).find((w) => has(lower, [w]));
+    const foodWord = fw ? FOOD_WORDS[fw] : null;
+    const match = (f) => !foodWord || f.name.includes(foodWord) || f.type.includes(foodWord) || f.desc.includes(foodWord);
+    const foodLine = (destId, f) => `・【${fType(f.type)}】${withZh(fName(destId, f), f.name)}: ${fDesc(destId, f)}`;
+    const shopLine = (x) => `・${withZh(sName(x), x.name)} (${sArea(x)}): ${sNote(x)}`;
     if (dest) {
       const list = dest.foods.filter(match);
       const shown = list.length ? list : dest.foods;
-      if (!shown.length) return { text: `${dest.name}以自然景觀為主,比較少特色小吃,建議回到鄰近市區用餐。` };
-      const note = foodWord && !list.length ? `${dest.name}沒有特別以「${foodWord}」出名,不過這些很值得吃:\n` : `來${dest.name}推薦你吃:\n`;
+      if (!shown.length) return { text: L(`${dName(dest.id)} is mostly about nature; eat in the nearest town.`, `${dest.name}以自然景觀為主,比較少特色小吃,建議回到鄰近市區用餐。`) };
+      const note = foodWord && !list.length
+        ? L(`${dName(dest.id)} isn't known for ${fType(foodWord).toLowerCase()}, but these are worth trying:\n`, `${dest.name}沒有特別以「${foodWord}」出名,不過這些很值得吃:\n`)
+        : L(`What to eat in ${dName(dest.id)}:\n`, `來${dest.name}推薦你吃:\n`);
       const shops = shopsOf(dest.id).filter((x) => !foodWord || x.dish === foodWord || shown.some((f) => f.name === x.dish));
-      const shopText = shops.length ? `\n\n📍 在地知名店家:\n${shops.slice(0, 5).map((x) => `・${x.name}(${x.area}):${x.note}`).join('\n')}` : '';
-      return { text: note + shown.slice(0, 6).map((f) => `・【${f.type}】${f.name}:${f.desc}`).join('\n') + shopText, action: { type: 'food', destId: dest.id } };
+      const shopText = shops.length ? `\n\n📍 ${L('Local favourites', '在地知名店家')}:\n${shops.slice(0, 5).map(shopLine).join('\n')}` : '';
+      const cash = L('\n\n💵 Bring cash: small shops and night-market stalls often don’t take cards.', '');
+      return { text: note + shown.slice(0, 6).map((f) => foodLine(dest.id, f)).join('\n') + shopText + cash, action: { type: 'food', destId: dest.id } };
     }
     const all = [
-      ...(foodWord === '早餐' ? DESTINATIONS.flatMap((d) => shopsOf(d.id, '早餐').map((x) => `・${x.name}(${d.name}${x.area}):${x.note}`)) : []),
-      ...DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `・${f.name}(${d.name}):${f.desc}`)),
+      ...(foodWord === '早餐' ? DESTINATIONS.flatMap((d) => shopsOf(d.id, '早餐').map((x) => `${shopLine(x)} — ${dName(d.id)}`)) : []),
+      ...DESTINATIONS.flatMap((d) => d.foods.filter(match).map((f) => `${foodLine(d.id, f)} — ${dName(d.id)}`)),
     ];
-    if (foodWord && all.length) return { text: `各地的${foodWord}推薦:\n${all.slice(0, 8).join('\n')}` };
-    const markets = DESTINATIONS.flatMap((d) => d.foods.filter((f) => f.type === '夜市').map((f) => `${f.name}(${d.name})`));
-    return { text: `台灣必逛的夜市有:${markets.join('、')}。\n告訴我你在哪個城市(例如「台南有什麼好吃的」),我可以推薦當地小吃!` };
+    if (foodWord && all.length) return { text: `${L(`${fType(foodWord)} picks around Taiwan:`, `各地的${foodWord}推薦:`)}\n${all.slice(0, 8).join('\n')}` };
+    const markets = DESTINATIONS.flatMap((d) => d.foods.filter((f) => f.type === '夜市').map((f) => `${withZh(fName(d.id, f), f.name)} — ${dName(d.id)}`));
+    return { text: L(`Must-visit night markets: ${markets.join(', ')}.\nTell me which city you're in (e.g. "What to eat in Tainan?") for local picks!`, `台灣必逛的夜市有:${markets.join('、')}。\n告訴我你在哪個城市(例如「台南有什麼好吃的」),我可以推薦當地小吃!`) };
   }
 
-  // 某個地點好不好玩
+  // About one place
   if (dest) {
-    if (!dest.attractions.length) return { ...routeAnswer(dest.id === 'taipei' ? 'airport' : 'taipei', dest.id), text: `${dest.intro}\n${dest.localTransport}` };
+    if (!dest.attractions.length) return { ...routeAnswer(dest.id === 'taipei' ? 'airport' : 'taipei', dest.id), text: `${dIntro(dest)}\n${dLocal(dest)}` };
     const picks = recommend(interests, { limit: 50 }).filter((a) => a.destId === dest.id).slice(0, 4);
-    const list = (picks.length ? picks : dest.attractions.slice(0, 4)).map((a) => `・${a.name}(建議 ${a.hours} 小時):${a.desc}`);
-    const food = dest.foods.slice(0, 3).map((f) => f.name).join('、');
+    const list = (picks.length ? picks : dest.attractions.map((a) => ({ ...a, destId: dest.id })).slice(0, 4))
+      .map((a) => `・${withZh(aName(a), a.name)} (${L('about', '建議')} ${a.hours} ${L('h', '小時')}): ${aDesc(a)}`);
+    const food = dest.foods.slice(0, 3).map((f) => withZh(fName(dest.id, f), f.name)).join(L(', ', '、'));
     return {
-      text: `${dest.intro}\n推薦你去:\n${list.join('\n')}${food ? `\n\n😋 必吃:${food}` : ''}\n🚏 在地交通:${dest.localTransport}`,
+      text: `${dIntro(dest)}\n${L('Go see:', '推薦你去:')}\n${list.join('\n')}${food ? `\n\n😋 ${L('Must eat', '必吃')}: ${food}` : ''}\n🚏 ${L('Getting around', '在地交通')}: ${dLocal(dest)}`,
       action: { type: 'dest', destId: dest.id },
     };
   }
 
-  if (interests.length || region || has(text, INTENT_WORDS.play) || text.includes('第一次')) {
+  if (interests.length || region || has(lower, INTENT_WORDS.play) || text.includes('第一次')) {
     const picks = recommend(interests, { region, limit: 6 });
-    if (!picks.length) return { text: '這個條件我暫時找不到適合的景點,換個說法試試看?' };
-    const label = interests.map((k) => INTERESTS.find((i) => i.key === k)?.label).join('、');
-    const head = `${region ?? '全台'}${label ? `「${label}」` : '必去'}推薦`;
-    return { text: `${head}:\n${picks.map((a) => `・${a.name}(${a.destName}):${a.desc}`).join('\n')}` };
+    if (!picks.length) return { text: L('I couldn’t find a good match. Try asking another way?', '這個條件我暫時找不到適合的景點,換個說法試試看?') };
+    const label = interests.map((k) => interestName(k, INTERESTS.find((i) => i.key === k)?.label)).join(L(', ', '、'));
+    const where = region ? regionName(region) : L('Taiwan', '全台');
+    const head = L(`${label ? `${label} picks` : 'Must-sees'} in ${where}`, `${where}${label ? `「${label}」` : '必去'}推薦`);
+    return { text: `${head}:\n${picks.map(spotLine).join('\n')}` };
   }
 
-  return { ...greet(), text: `我不太確定你想問什麼 🙏\n${greet().text}` };
+  return { ...greet(), text: `${L('I’m not sure what you mean 🙏', '我不太確定你想問什麼 🙏')}\n${greet().text}` };
 }
 
 function greet() {
   return {
-    text: '你好!我是你的台灣小導遊 🧭\n你可以問我:\n・台南有什麼好吃的?\n・台北去花蓮要多久?\n・花蓮三天怎麼玩?\n・哪裡看夕陽最美?\n・下雨天台中可以去哪?',
+    text: L(
+      'Hi! I’m your local buddy in Taiwan 🧭\nAsk me things like:\n・What should I eat in Tainan?\n・How long from Taipei to Hualien?\n・3 days in Hualien?\n・Best place for the sunset?\n・Rainy day in Taichung, where to go?',
+      '你好!我是你的台灣小導遊 🧭\n你可以問我:\n・台南有什麼好吃的?\n・台北去花蓮要多久?\n・花蓮三天怎麼玩?\n・哪裡看夕陽最美?\n・下雨天台中可以去哪?',
+    ),
   };
 }
 
-// 「問導遊」AI 版:在 claude.ai 上開啟時,由 Claude 理解問題,
-// 並透過下方工具查詢 App 內的景點、美食、交通資料後回答。
-// 無法使用時(直接開檔、未授權等)回傳 null,由 guide.js 的離線規則接手。
+// AI guide: on claude.ai, Claude understands the question and answers using the tools below,
+// which read the app's own data (places, food, shops, routes, itineraries).
+// When Claude isn't available (opened as a file, not granted, …) this returns null and guide.js takes over.
 
 const MAX_TURNS = 10;
 
 function resolvePlace(name) {
   const id = findDestinations(String(name ?? ''))[0];
-  if (!id) throw new Error(`資料裡沒有「${name}」,可用地點:${DESTINATIONS.map((d) => d.name).join('、')}`);
+  if (!id) throw new Error(`No place "${name}" in the app. Known places: ${DESTINATIONS.map((d) => `${DEST_EN[d.id].name} (${d.name})`).join(', ')}`);
   return id;
 }
+
+const enPlace = (id) => `${DEST_EN[id]?.name ?? id} (${placeName(id)})`;
+const enAttr = (a) => ({ name: a.name, en: ATTR_EN[a.id]?.name, hours: a.hours, tags: a.tags, desc: ATTR_EN[a.id]?.desc ?? a.desc, tip: ATTR_EN[a.id]?.tip ?? a.tip });
 
 const TOOLS = [
   {
     name: 'get_destination',
-    description: '查詢一個地點(城市/景區)的介紹、在地交通、所有景點、美食類型,以及具體的在地知名店家(shops)。回傳 JSON。',
-    inputSchema: { type: 'object', properties: { name: { type: 'string', description: '地點名稱,例如 台南、九份、日月潭' } }, required: ['name'] },
+    description: 'Look up one place (city or scenic area): intro, local transport, all attractions, typical foods, and specific well-known local shops. Chinese name in `name`, English in `en`. Returns JSON.',
+    inputSchema: { type: 'object', properties: { name: { type: 'string', description: 'Place name in English or Chinese, e.g. Tainan / 台南, Jiufen, Sun Moon Lake' } }, required: ['name'] },
     execute({ name }) {
       const d = getDestination(resolvePlace(name));
+      const e = DEST_EN[d.id];
       return {
-        name: d.name, region: d.region, intro: d.intro, localTransport: d.localTransport,
-        attractions: d.attractions.map((a) => ({ name: a.name, hours: a.hours, tags: a.tags, desc: a.desc, tip: a.tip, nightOnly: a.evening })),
-        foods: d.foods.map((f) => ({ name: f.name, type: f.type, desc: f.desc })),
-        shops: shopsOf(d.id).map((x) => ({ name: x.name, dish: x.dish, area: x.area, note: x.note })),
+        name: d.name, en: e.name, region: d.region, intro: e.intro, localTransport: e.localTransport,
+        attractions: d.attractions.map((a) => ({ ...enAttr(a), nightOnly: a.evening })),
+        foods: d.foods.map((f) => ({ name: f.name, en: FOOD_EN[`${d.id}:${f.name}`]?.name, type: f.type, desc: FOOD_EN[`${d.id}:${f.name}`]?.desc ?? f.desc })),
+        shops: shopsOf(d.id).map((x) => ({ name: x.name, en: SHOP_EN[x.name]?.name, dish: x.dish, area: SHOP_EN[x.name]?.area ?? x.area, note: SHOP_EN[x.name]?.note ?? x.note })),
       };
     },
   },
   {
     name: 'search_attractions',
-    description: '依興趣標籤、地區或關鍵字(例如 夕陽、日出、天燈)搜尋全台景點,回傳最符合的前 8 個。',
+    description: 'Search attractions across Taiwan by interest tag (Chinese keys), region (Chinese), or a keyword found in the Chinese name/description (e.g. 夕陽 sunset, 日出 sunrise, 天燈 lantern). Returns the top 8.',
     inputSchema: {
       type: 'object',
       properties: {
         interests: { type: 'array', items: { type: 'string', enum: INTERESTS.map((i) => i.key) } },
         region: { type: 'string', enum: REGIONS },
-        keyword: { type: 'string', description: '在景點名稱與介紹中搜尋的字' },
+        keyword: { type: 'string', description: 'Chinese keyword searched in names and descriptions' },
       },
     },
     execute({ interests, region, keyword }) {
       const tags = Array.isArray(interests) ? interests.map(String) : [];
       let list = recommend(tags, { region: region ? String(region) : undefined, limit: 200 });
       if (keyword) list = list.filter((a) => `${a.name}${a.desc}${a.tip ?? ''}`.includes(String(keyword)));
-      return list.slice(0, 8).map((a) => ({ name: a.name, place: a.destName, hours: a.hours, tags: a.tags, desc: a.desc, tip: a.tip }));
+      return list.slice(0, 8).map((a) => ({ ...enAttr(a), place: enPlace(a.destId) }));
     },
   },
   {
     name: 'plan_route',
-    description: '查兩地之間的大眾運輸路線,回傳最快/最省錢/最少轉乘方案(每段交通工具、時間、參考票價)。',
+    description: 'Public transport between two places: fastest / cheapest / fewest-transfer options with each leg, minutes and estimated fare in NTD.',
     inputSchema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } }, required: ['from', 'to'] },
     execute({ from, to }) {
       const a = resolvePlace(from);
       const b = resolvePlace(to);
-      if (a === b) throw new Error('出發地與目的地相同');
+      if (a === b) throw new Error('Start and destination are the same');
       const routes = planAlternatives(a, b);
       return {
-        from: placeName(a), to: placeName(b), arrivalTip: getDestination(b).localTransport,
+        from: enPlace(a), to: enPlace(b), arrivalTip: DEST_EN[b].localTransport,
         options: routes.map((r) => ({
           type: r.labels, totalMinutes: r.totalMin, totalFareNTD: r.totalFare, transfers: r.transfers,
-          legs: r.legs.map((l) => ({ by: l.name, from: placeName(l.from), to: placeName(l.to), minutes: l.min, fareNTD: l.fare, tips: l.tips })),
+          legs: r.legs.map((l) => ({ by: `${LINE_EN[l.name] ?? l.name} (${l.name})`, from: enPlace(l.from), to: enPlace(l.to), minutes: l.min, fareNTD: l.fare, tips: l.tips })),
         })),
       };
     },
   },
   {
     name: 'make_itinerary',
-    description: '自動排多日行程,回傳每天的景點、移動與美食。stay_in_region=true 時只在出發地同區域內移動。',
+    description: 'Build a multi-day itinerary: each day’s spots, travel and a food pick. stay_in_region=true keeps it within the start’s region.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1199,31 +1635,34 @@ const TOOLS = [
         day: d.day,
         stayAt: d.stayAt,
         items: d.items.map((i) => (i.type === 'travel'
-          ? `移動 ${placeName(i.from)}→${placeName(i.to)}(${i.route.legs.map((l) => l.name).join('→')},約 ${i.route.totalMin} 分)`
-          : i.type === 'food' ? `美食:${i.name}` : `${i.name}(${i.hours} 小時)`)),
+          ? `Travel ${enPlace(i.from)} → ${enPlace(i.to)} by ${i.route.legs.map((l) => LINE_EN[l.name] ?? l.name).join(' → ')}, about ${i.route.totalMin} min`
+          : i.type === 'food' ? `Food: ${FOOD_EN[`${i.destId}:${i.name}`]?.name ?? ''} (${i.name})` : `${ATTR_EN[i.id]?.name ?? ''} (${i.name}), ${i.hours} h`)),
       }));
     },
   },
 ];
 
-const RULES = `你是「台灣小導遊」App 裡的導遊,用台灣繁體中文、親切口語地回答旅客。
-規則:
-1. 回答景點、美食、交通、行程時,先用工具查 App 資料,再根據結果回答;不要編造店名、班次或票價。
-2. 問美食時,優先推薦 get_destination 回傳的 shops(具體店名+在哪裡+特色),店名要一字不差照抄,App 會自動附上 Google 地圖連結。
-3. 你看不到 Google 評分:絕對不要寫出星等、評論數或「Google 4.5 分」之類的數字;需要時說「可以點下方地圖連結看最新評分」。
-4. App 資料沒有的內容,只補充你非常確定的知名店家或常識,並說明「建議出發前再確認營業時間」。
-5. 交通時間與票價一律說是「約」、「參考」。
-6. 問題不清楚(例如沒說從哪裡出發)時,先用最合理的假設回答(預設從台北出發),並在最後一句提醒可以告訴你出發地。
-7. 格式:純文字,不要用 Markdown 標題、粗體或表格;條列用「・」;整體 250 字以內,重點先講。
-8. 與旅遊無關的問題,簡短回應後把話題帶回台灣旅遊。
-App 收錄的地點:${DESTINATIONS.map((d) => d.name).join('、')}。
-興趣標籤:${INTERESTS.map((i) => i.key).join('、')}。
-今天日期:${new Date().toISOString().slice(0, 10)}。`;
+const RULES = `You are the local buddy inside the "Taiwan Buddy" app, helping foreign visitors travel in Taiwan like a friendly local who speaks Chinese.
+Rules:
+1. Reply in the language the traveller writes in (English if unsure). Friendly, practical, like a local friend.
+2. For places, food, transport and itineraries, call the tools first and answer from their results. Never invent shop names, train times or prices.
+3. Whenever you name a place, dish or shop, write the English name followed by the exact Chinese name in parentheses, copied character for character from the tool result, e.g. "Fuhang Soy Milk (阜杭豆漿)". Travellers show the Chinese to locals, and the app turns these names into Google Maps links.
+4. For food, prefer the specific shops from get_destination (name, where, what to order).
+5. You cannot see Google ratings: never write star ratings, review counts or scores. If useful, say they can tap the map links for the latest ratings.
+6. Add the practical things visitors don't know when relevant: cash only at night markets and small stalls, EasyCard, no eating or drinking on the MRT, booking trains ahead, opening hours (many breakfast shops close by midday).
+7. Only add facts outside the app data when you are very sure, and say to check opening hours before going.
+8. Times and fares are estimates: say "about".
+9. If something is unclear (e.g. no starting point), assume the most likely case (start from Taipei) and say they can tell you otherwise.
+10. Format: plain text, no Markdown headings, bold or tables. Use "・" for list items. Keep it under about 180 words, most useful point first.
+11. For questions unrelated to travel, answer briefly and steer back to Taiwan travel.
+Places in the app: ${DESTINATIONS.map((d) => `${DEST_EN[d.id].name} (${d.name})`).join(', ')}.
+Interest tags (use the Chinese keys): ${INTERESTS.map((i) => i.key).join(', ')}.
+Today's date: ${new Date().toISOString().slice(0, 10)}.`;
 
 let samplePromise = null;
 let disabled = false;
 
-// 回傳可用的 sample 函式,或 null
+// Resolves the sample function when Claude with tools is available, else null
 async function getSampler() {
   if (disabled || typeof window === 'undefined' || !window.claude?.use) return null;
   samplePromise ??= window.claude.use('sample').then(async (sample) => {
@@ -1234,10 +1673,53 @@ async function getSampler() {
   return samplePromise;
 }
 
+let rawPromise = null;
+// sample() without the tools requirement, plus its limits (for photos and phrase cards)
+async function getRawSampler() {
+  if (typeof window === 'undefined' || !window.claude?.use) return null;
+  rawPromise ??= window.claude.use('sample').then(async (sample) => {
+    if (!sample) return null;
+    const limits = await sample.limits().catch(() => null);
+    return { sample, images: Boolean(limits?.images), mediaTypes: limits?.images?.mediaTypes ?? [] };
+  }).catch(() => null);
+  return rawPromise;
+}
+
+const PHOTO_PROMPT = (lang) => `This photo was taken by a foreign visitor in Taiwan: a menu, sign, label or ticket.
+Translate it for them into ${lang === 'zh' ? 'Traditional Chinese (Taiwan)' : 'English'}.
+For a menu: one line per item as "・中文名 — translation — price", then short notes on anything a visitor should know: pork, beef, seafood, spicy, peanuts or other common allergens, vegetarian options, and 1–2 items worth trying.
+For a sign or notice: what it says and what the visitor should do.
+Plain text only, no Markdown. If the photo is unreadable, say so and suggest retaking it closer.`;
+
+async function translatePhoto(file, lang, { onText, signal } = {}) {
+  const raw = await getRawSampler();
+  if (!raw?.images) return { error: 'images_unavailable' };
+  try {
+    const { text } = await raw.sample(PHOTO_PROMPT(lang), { images: file, modelTier: 'default', cache: false, onText: ({ text: t }) => onText?.(t), signal });
+    return { text };
+  } catch (e) {
+    return { error: e?.code ?? 'upstream_error', text: e?.text };
+  }
+}
+
+async function makePhrase(text) {
+  const raw = await getRawSampler();
+  if (!raw) return { error: 'not_available' };
+  try {
+    const card = await raw.sample.json(`A foreign visitor in Taiwan wants to show this to a local (shop owner, driver, staff): "${text}"
+Write it as natural, polite Taiwanese Mandarin in Traditional Chinese characters, short enough for a big card.
+Reply with only JSON: {"zh": "...", "py": "hanyu pinyin with tone marks", "en": "short English back-translation"}`, { modelTier: 'quick' });
+    if (!card?.zh) return { error: 'invalid_json' };
+    return { card: { zh: String(card.zh), py: String(card.py ?? ''), en: String(card.en ?? text) } };
+  } catch (e) {
+    return { error: e?.code ?? 'upstream_error' };
+  }
+}
+
 const PERMANENT = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed', 'tools_unavailable'];
 
 /**
- * @param {{who:'me'|'bot', text:string}[]} history 對話紀錄(最後一則是旅客的新問題)
+ * @param {{who:'me'|'bot', text:string}[]} history the chat so far (last item is the traveller's new question)
  * @returns {Promise<{text:string}|{error:string, permanent:boolean, text?:string}|null>}
  */
 async function askClaude(history, { onText, signal } = {}) {
@@ -1288,32 +1770,103 @@ function transitUrl(fromName, toName) {
   return `https://www.google.com/maps/dir/?${p}`;
 }
 
+// Survival content for visitors: phrase cards, bubble-tea ordering, local tips, emergency numbers.
+
+const PHRASES = [
+  { zh: '我要這個', py: 'wǒ yào zhège', en: 'I’d like this one, please.' },
+  { zh: '多少錢?', py: 'duōshǎo qián', en: 'How much is it?' },
+  { zh: '可以刷卡嗎?', py: 'kěyǐ shuākǎ ma', en: 'Can I pay by card?' },
+  { zh: '內用', py: 'nèiyòng', en: 'Eat here' },
+  { zh: '外帶', py: 'wàidài', en: 'Take away' },
+  { zh: '不要香菜', py: 'bú yào xiāngcài', en: 'No cilantro, please.' },
+  { zh: '不要辣', py: 'bú yào là', en: 'Not spicy, please.' },
+  { zh: '我吃素(不吃肉、不吃海鮮)', py: 'wǒ chī sù', en: 'I’m vegetarian (no meat, no seafood).' },
+  { zh: '我對花生過敏', py: 'wǒ duì huāshēng guòmǐn', en: 'I’m allergic to peanuts.' },
+  { zh: '我不吃豬肉', py: 'wǒ bù chī zhūròu', en: 'I don’t eat pork.' },
+  { zh: '請問廁所在哪裡?', py: 'qǐngwèn cèsuǒ zài nǎlǐ', en: 'Where is the restroom?' },
+  { zh: '請問捷運站在哪裡?', py: 'qǐngwèn jiéyùn zhàn zài nǎlǐ', en: 'Where is the MRT station?' },
+  { zh: '請載我到這個地址', py: 'qǐng zài wǒ dào zhège dìzhǐ', en: 'Please take me to this address.' },
+  { zh: '我不會說中文,謝謝你', py: 'wǒ bú huì shuō zhōngwén, xièxie nǐ', en: 'I don’t speak Chinese, thank you.' },
+  { zh: '請幫我叫救護車', py: 'qǐng bāng wǒ jiào jiùhùchē', en: 'Please call an ambulance for me.' },
+];
+
+// Standard hand-shaken tea shop options
+const TEA = {
+  drinks: [
+    { zh: '珍珠奶茶', en: 'Bubble milk tea' }, { zh: '紅茶拿鐵', en: 'Black tea latte' },
+    { zh: '四季春青茶', en: 'Four Seasons oolong' }, { zh: '冬瓜檸檬', en: 'Winter melon lemon' },
+  ],
+  sugar: [
+    { zh: '全糖', en: 'Full sugar (100%)' }, { zh: '少糖', en: 'Less sugar (~70%)' }, { zh: '半糖', en: 'Half sugar (50%)' },
+    { zh: '微糖', en: 'Light sugar (~30%)' }, { zh: '無糖', en: 'No sugar' },
+  ],
+  ice: [
+    { zh: '正常冰', en: 'Regular ice' }, { zh: '少冰', en: 'Less ice' }, { zh: '微冰', en: 'Light ice' },
+    { zh: '去冰', en: 'No ice' }, { zh: '溫的', en: 'Warm' }, { zh: '熱的', en: 'Hot' },
+  ],
+  size: [{ zh: '大杯', en: 'Large' }, { zh: '中杯', en: 'Medium' }],
+};
+
+const TIPS = [
+  { icon: '💳', en: 'Get an EasyCard (悠遊卡) or iPASS at any MRT station or convenience store. It works on the MRT, buses, YouBike bikes and in convenience stores.', zh: '在捷運站或便利商店買悠遊卡或一卡通,捷運、公車、YouBike、便利商店都能用。' },
+  { icon: '💵', en: 'Carry cash. Night-market stalls and small eateries are often cash only. ATMs at 7-Eleven and FamilyMart usually accept foreign cards.', zh: '身上要帶現金:夜市攤販和小吃店常常只收現金。7-11、全家的 ATM 大多可用國外提款卡。' },
+  { icon: '🚇', en: 'No eating or drinking (even water or gum) inside MRT stations and trains. You can be fined NT$1,500–7,500.', zh: '捷運站內和車廂禁止飲食(包括喝水、口香糖),違者可罰 NT$1,500–7,500。' },
+  { icon: '🗑️', en: 'There are very few public bins. Keep your trash and throw it away at a convenience store or your hotel.', zh: '路上幾乎沒有垃圾桶,垃圾請先帶著,到便利商店或旅館再丟。' },
+  { icon: '🙅', en: 'No tipping. Some sit-down restaurants add a 10% service charge to the bill.', zh: '不用給小費;部分餐廳會在帳單加收一成服務費。' },
+  { icon: '🚰', en: 'Don’t drink tap water unboiled. Use the water dispensers in stations, museums and hotels.', zh: '自來水要煮沸才能喝,車站、博物館、旅館多有飲水機。' },
+  { icon: '🛵', en: 'Scooters are everywhere and cars may turn across crosswalks. Look both ways, even on a green light.', zh: '機車很多,車輛也會轉彎穿過斑馬線,即使綠燈也要左右看。' },
+  { icon: '💺', en: 'Leave the dark-blue priority seats (博愛座) on the MRT for elderly, pregnant or disabled passengers.', zh: '捷運上的深藍色博愛座請讓給長者、孕婦、行動不便者。' },
+  { icon: '🚕', en: 'Taxis are yellow and metered. Show the driver the Chinese name or address; Uber also works in big cities.', zh: '計程車是黃色、跳表計費,給司機看中文名稱或地址;大城市也能叫 Uber。' },
+  { icon: '🧾', en: 'Tourist tax refund: at shops with the TRS sign, same-day purchases over NT$2,000 can qualify. Bring your passport.', zh: '外籍旅客退稅:有 TRS 標誌的商店,同日消費滿 NT$2,000 可申請,記得帶護照。' },
+  { icon: '🌀', en: 'Typhoons (summer–autumn) can cancel trains, ferries and flights. Watch the news and your phone alerts.', zh: '夏秋颱風可能讓火車、船班、飛機停駛,留意新聞與手機警報。' },
+];
+
+const SOS = [
+  { num: '110', en: 'Police', zh: '報警' },
+  { num: '119', en: 'Fire & ambulance', zh: '消防、救護車' },
+  { num: '0800-011-765', en: 'Tourist hotline (24 h, English, Japanese & more)', zh: '觀光諮詢熱線(24 小時,多語)' },
+];
+
 
 const view = document.getElementById('view');
+const nav = document.querySelector('.tabbar');
+const overlay = document.getElementById('overlay');
 
-// ---------- 狀態與本機儲存 ----------
+// ---------- state & per-browser storage ----------
 const storage = {
   get(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
   },
   set(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* 無痕模式等情況忽略 */ }
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode etc. */ }
   },
 };
+
+setLang(storage.get('lang', 'en'));
 
 const state = {
   tab: 'home',
   interests: [],
   region: '',
-  chat: [{ who: 'bot', text: askGuide('').text }],
+  chat: [{ who: 'bot', text: askGuide('').text, greeting: true }],
   chatBusy: false,
   aiMode: 'checking', // checking | ai | offline
-  nearby: null,
+  nearby: null, // {items} | {error}
   plan: { start: 'taipei', days: 3, pace: 'normal', interests: [], returnToStart: true, result: null },
   route: { from: 'taipei', to: 'tainan', results: null },
   explore: { destId: 'taipei' },
-  saved: storage.get('saved', []), // [{id, name, destId}]
+  saved: storage.get('saved', []),
+  help: {
+    photo: { available: false, busy: false, text: '' },
+    custom: { busy: false, card: null, error: '' },
+    tea: { drink: 0, sugar: 2, ice: 1, size: 0 },
+  },
 };
+
+const TABS = [['home', '🧭', 'tabGuide'], ['plan', '🗓️', 'tabPlan'], ['route', '🚆', 'tabTransit'], ['explore', '🍜', 'tabEat'], ['help', '🆘', 'tabHelp']];
+const PACE_EN = { relaxed: 'Relaxed', normal: 'Normal', packed: 'Packed' };
+const LABEL_EN = { 最快: 'Fastest', 最省錢: 'Cheapest', 最少轉乘: 'Fewest transfers' };
+const isEn = () => getLang() === 'en';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const findAttraction = (id) => {
@@ -1324,71 +1877,77 @@ const findAttraction = (id) => {
   return null;
 };
 const isSaved = (id) => state.saved.some((s) => s.id === id);
+// English first with Chinese underneath, so visitors can show the Chinese to locals
+const dual = (enName, zh) => (isEn() && enName !== zh ? `${esc(enName)} <span class="zh">${esc(zh)}</span>` : esc(zh));
 
-function destOptions(selected, { withEmpty = false } = {}) {
-  const groups = REGIONS.map((r) => {
+function destOptions(selected) {
+  return REGIONS.map((r) => {
     const opts = DESTINATIONS.filter((d) => d.region === r)
-      .map((d) => `<option value="${d.id}" ${d.id === selected ? 'selected' : ''}>${d.name}</option>`).join('');
-    return `<optgroup label="${r}">${opts}</optgroup>`;
+      .map((d) => `<option value="${d.id}" ${d.id === selected ? 'selected' : ''}>${esc(withZh(dName(d.id), d.name))}</option>`).join('');
+    return `<optgroup label="${regionName(r)}">${opts}</optgroup>`;
   }).join('');
-  return (withEmpty ? '<option value="">全部地區</option>' : '') + groups;
 }
 
 function interestChips(selected, group) {
   return `<div class="chips">${INTERESTS.map((i) =>
-    `<button class="chip ${selected.includes(i.key) ? 'on' : ''}" data-action="toggle-interest" data-group="${group}" data-key="${i.key}">${i.icon} ${i.label}</button>`).join('')}</div>`;
+    `<button class="chip ${selected.includes(i.key) ? 'on' : ''}" data-action="toggle-interest" data-group="${group}" data-key="${i.key}">${i.icon} ${esc(interestName(i.key, i.label))}</button>`).join('')}</div>`;
 }
 
 function spotCard(a) {
   return `<div class="card">
-    <div class="row spread"><h3>${esc(a.name)}</h3>
-      <button class="icon-btn" data-action="save" data-id="${a.id}" aria-label="收藏">${isSaved(a.id) ? '⭐' : '☆'}</button></div>
-    <div class="muted small">📍 ${esc(a.destName)} ・ 建議停留 ${a.hours} 小時${a.km != null ? ` ・ 距離 ${a.km.toFixed(1)} km` : ''}</div>
-    <p>${esc(a.desc)}</p>
-    ${a.tip ? `<p class="small">💡 ${esc(a.tip)}</p>` : ''}
-    <div>${a.tags.map((t) => `<span class="tag">${t}</span>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><a class="small" href="${mapsUrl(a.name)}" target="_blank" rel="noopener">🗺️ 開啟地圖</a></div>
+    <div class="row spread"><h3>${dual(aName(a), a.name)}</h3>
+      <button class="icon-btn" data-action="save" data-id="${a.id}" aria-label="${t('save')}">${isSaved(a.id) ? '⭐' : '☆'}</button></div>
+    <div class="muted small">📍 ${esc(dName(a.destId))} ・ ${t('stay')} ${a.hours} ${t('hours')}${a.km != null ? ` ・ ${a.km.toFixed(1)} km ${isEn() ? t('away') : ''}` : ''}</div>
+    <p>${esc(aDesc(a))}</p>
+    ${aTip(a) ? `<p class="small">💡 ${esc(aTip(a))}</p>` : ''}
+    <div class="row" style="margin-top:8px">
+      <a class="small" href="${mapsUrl(a.name)}" target="_blank" rel="noopener">${t('openMap')}</a>
+      ${isEn() ? `<button class="link small" data-action="show-card" data-zh="${esc(a.name)}" data-en="${esc(aName(a))}">${t('showLocal')}</button>` : ''}
+    </div>
   </div>`;
 }
 
 function routeCard(r, from, to) {
   const legs = r.legs.map((l, i) => `
-    ${i > 0 ? `<li class="transfer">↻ 於${placeName(l.from)}轉乘(預留約 ${TRANSFER_MINUTES} 分鐘)</li>` : ''}
+    ${i > 0 ? `<li class="transfer">${t('changeAt', { p: esc(dName(l.from)), m: TRANSFER_MINUTES })}</li>` : ''}
     <li class="leg">
       <div class="mode">${MODE_INFO[l.mode].icon}</div>
       <div>
-        <strong>${esc(l.name)}</strong>
-        <div class="muted small">${l.stops.map(placeName).join(' → ')}</div>
-        <div class="small">約 ${formatDuration(l.min)} ・ NT$${l.fare}${MODE_INFO[l.mode].url ? ` ・ <a href="${MODE_INFO[l.mode].url}" target="_blank" rel="noopener">查時刻/訂票</a>` : ''}</div>
-        ${l.tips.map((t) => `<div class="small">💡 ${esc(t)}</div>`).join('')}
+        <strong>${dual(lineName(l.name), l.name)}</strong>
+        <div class="muted small">${l.stops.map((s) => esc(dName(s))).join(' → ')}</div>
+        <div class="small">${t('about')} ${duration(l.min)} ・ NT$${l.fare}${MODE_INFO[l.mode].url ? ` ・ <a href="${MODE_INFO[l.mode].url}" target="_blank" rel="noopener">${t('timetable')}</a>` : ''}</div>
+        ${l.tips.map((x) => `<div class="small">💡 ${esc(tipText(x))}</div>`).join('')}
       </div>
     </li>`).join('');
   return `<div class="card route-opt">
     <div class="row spread">
-      <div>${r.labels.map((x) => `<span class="chip on small">${x}</span>`).join(' ')}</div>
-      <div class="muted small">轉乘 ${r.transfers} 次</div>
+      <div>${r.labels.map((x) => `<span class="chip on small">${isEn() ? LABEL_EN[x] ?? x : x}</span>`).join(' ')}</div>
+      <div class="muted small">${t('transfers', { n: r.transfers })}</div>
     </div>
     <div class="row" style="margin-top:8px; gap:18px">
-      <div><div class="muted small">總時間</div><div class="stat">${formatDuration(r.totalMin)}</div></div>
-      <div><div class="muted small">參考票價</div><div class="stat">NT$${r.totalFare}</div></div>
+      <div><div class="muted small">${t('total')}</div><div class="stat">${duration(r.totalMin)}</div></div>
+      <div><div class="muted small">${t('fare')}</div><div class="stat">NT$${r.totalFare}</div></div>
     </div>
     <ul class="legs">${legs}</ul>
-    <a class="small" href="${transitUrl(placeName(from), placeName(to))}" target="_blank" rel="noopener">🗺️ 用 Google 地圖查即時班次</a>
+    <a class="small" href="${transitUrl(getDestination(from).name, getDestination(to).name)}" target="_blank" rel="noopener">${t('liveTransit')}</a>
   </div>`;
 }
 
-// 回答裡提到的店家與景點 → Google 地圖連結(看即時評分與評論)
+// Shops and spots named in an answer (by their Chinese name) → Google Maps links
 const PLACE_INDEX = [
-  ...Object.entries(SHOPS).flatMap(([destId, list]) => list.map((x) => ({ name: x.name, query: `${x.name} ${getDestination(destId).name}` }))),
-  ...DESTINATIONS.flatMap((d) => d.attractions.map((a) => ({ name: a.name.replace(/(.*?)/g, ''), query: a.name.replace(/(.*?)/g, '') }))),
-].sort((x, y) => y.name.length - x.name.length);
+  ...Object.entries(SHOPS).flatMap(([destId, list]) => list.map((x) => ({ zh: x.name, label: () => sName(x), query: `${x.name} ${getDestination(destId).name}` }))),
+  ...DESTINATIONS.flatMap((d) => d.attractions.map((a) => {
+    const zh = a.name.replace(/(.*?)/g, '');
+    return { zh, label: () => aName(a).replace(/ \(.*?\)$/, ''), query: zh };
+  })),
+].sort((x, y) => y.zh.length - x.zh.length);
 
 function placeLinks(text) {
   const found = [];
   let rest = text;
   for (const p of PLACE_INDEX) {
-    const short = p.name.split('・')[0];
-    const key = rest.includes(p.name) ? p.name : short.length >= 3 && rest.includes(short) ? short : null;
+    const short = p.zh.split('・')[0];
+    const key = rest.includes(p.zh) ? p.zh : short.length >= 3 && rest.includes(short) ? short : null;
     if (!key) continue;
     found.push(p);
     rest = rest.split(key).join('');
@@ -1399,112 +1958,112 @@ function placeLinks(text) {
 
 function linkChips(links) {
   if (!links?.length) return '';
-  return `<div class="chips links">${links.map((p) => `<a class="chip small" href="${mapsUrl(p.query)}" target="_blank" rel="noopener">📍 ${esc(p.name)}</a>`).join('')}</div>`;
+  return `<div class="chips links">${links.map((p) => `<a class="chip small" href="${mapsUrl(p.query)}" target="_blank" rel="noopener">📍 ${esc(p.label())}</a>`).join('')}</div>`;
 }
 
-const SAMPLE_QUESTIONS = ['台南早餐吃什麼?', '台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?'];
-
 function aiBadge() {
-  if (state.aiMode === 'ai') return '<span class="tag">✨ 由 Claude 回答</span>';
-  if (state.aiMode === 'offline') return '<span class="tag">離線導遊</span>';
+  if (state.aiMode === 'ai') return `<span class="tag">${t('byClaude')}</span>`;
+  if (state.aiMode === 'offline') return `<span class="tag">${t('offline')}</span>`;
   return '';
 }
 
-// ---------- 各頁面 ----------
+// ---------- pages ----------
 function renderHome() {
   const recs = recommend(state.interests, { region: state.region || undefined, limit: 6 });
+  const nearby = state.nearby?.error ? `<div class="empty">${t(state.nearby.error)}</div>` : (state.nearby?.items ?? []).map(spotCard).join('');
   return `
     <div class="card">
-      <div class="row spread"><h2 style="margin:0">💬 問問小導遊</h2>${aiBadge()}</div>
+      <div class="row spread"><h2 style="margin:0">${t('askTitle')}</h2>${aiBadge()}</div>
       <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}${linkChips(m.links)}</div>`).join('')}</div>
       <form class="ask" data-form="ask">
-        <input type="text" name="q" id="ask-q" placeholder="例:花蓮三天怎麼玩?" autocomplete="off" ${state.chatBusy ? 'disabled' : ''} />
-        <button class="btn" type="submit" ${state.chatBusy ? 'disabled' : ''}>${state.chatBusy ? '回答中…' : '送出'}</button>
+        <input type="text" name="q" id="ask-q" placeholder="${esc(t('askPlaceholder'))}" autocomplete="off" ${state.chatBusy ? 'disabled' : ''} />
+        <button class="btn" type="submit" ${state.chatBusy ? 'disabled' : ''}>${state.chatBusy ? t('answering') : t('send')}</button>
       </form>
-      <div class="chips" style="margin-top:8px">${SAMPLE_QUESTIONS.map((q) => `<button class="chip small" data-action="ask" data-q="${esc(q)}" ${state.chatBusy ? 'disabled' : ''}>${esc(q)}</button>`).join('')}</div>
+      <div class="chips" style="margin-top:8px">${t('examples').map((q) => `<button class="chip small" data-action="ask" data-q="${esc(q)}" ${state.chatBusy ? 'disabled' : ''}>${esc(q)}</button>`).join('')}</div>
     </div>
 
-    <h2>✨ 導遊推薦</h2>
-    <p class="muted">選擇你的旅遊偏好,我會推薦最適合的景點。</p>
+    <h2>${t('recTitle')}</h2>
+    <p class="muted">${t('recHint')}</p>
     ${interestChips(state.interests, 'home')}
-    <label class="field">地區</label>
-    <select data-bind="region">
-      <option value="">全台灣</option>
-      ${REGIONS.map((r) => `<option ${r === state.region ? 'selected' : ''}>${r}</option>`).join('')}
+    <label class="field" for="region">${t('region')}</label>
+    <select id="region" data-bind="region">
+      <option value="">${t('allTaiwan')}</option>
+      ${REGIONS.map((r) => `<option value="${r}" ${r === state.region ? 'selected' : ''}>${regionName(r)}</option>`).join('')}
     </select>
-    <div class="grid" style="margin-top:12px">${recs.map(spotCard).join('') || '<div class="empty">沒有符合的景點</div>'}</div>
+    <div class="grid" style="margin-top:12px">${recs.map(spotCard).join('') || `<div class="empty">${t('noMatch')}</div>`}</div>
 
-    <h2>📍 我附近有什麼?</h2>
-    <button class="btn ghost" data-action="nearby">使用我的位置</button>
-    <div id="nearby" class="grid" style="margin-top:12px">${state.nearby ?? ''}</div>`;
+    <h2>${t('nearTitle')}</h2>
+    <button class="btn ghost" data-action="nearby">${t('useLocation')}</button>
+    <div class="grid" style="margin-top:12px">${nearby}</div>`;
 }
 
 function renderPlan() {
   const p = state.plan;
+  const stayName = (zh) => {
+    const id = DESTINATIONS.find((x) => x.name === zh)?.id;
+    return id ? withZh(dName(id), zh) : zh;
+  };
   const result = p.result ? p.result.map((d) => `
     <div class="card day">
       <h3>Day ${d.day}</h3>
-      <ul class="timeline">${d.items.map(renderItem).join('') || '<li>自由活動</li>'}</ul>
-      <div class="muted small" style="margin-top:6px">🏨 今晚住宿:${esc(d.stayAt)}</div>
+      <ul class="timeline">${d.items.map(renderItem).join('') || `<li>${t('free')}</li>`}</ul>
+      <div class="muted small" style="margin-top:6px">${t('tonight')} ${esc(stayName(d.stayAt))}</div>
     </div>`).join('') : '';
   return `
-    <h2>🗓️ 幫我排行程</h2>
+    <h2>${t('planTitle')}</h2>
     <div class="card">
-      <label class="field">出發地</label>
-      <select data-bind="plan.start">${destOptions(p.start)}</select>
+      <label class="field" for="plan-start">${t('start')}</label>
+      <select id="plan-start" data-bind="plan.start">${destOptions(p.start)}</select>
       <div class="row" style="gap:12px">
-        <div style="flex:1"><label class="field">天數</label>
-          <select data-bind="plan.days">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${n === p.days ? 'selected' : ''}>${n} 天</option>`).join('')}</select></div>
-        <div style="flex:1"><label class="field">步調</label>
-          <select data-bind="plan.pace">${Object.entries(PACES).map(([k, v]) => `<option value="${k}" ${k === p.pace ? 'selected' : ''}>${v.label}(每天約 ${v.hours} 小時)</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="field" for="plan-days">${t('days')}</label>
+          <select id="plan-days" data-bind="plan.days">${[1, 2, 3, 4, 5, 6, 7].map((n) => `<option value="${n}" ${n === p.days ? 'selected' : ''}>${n} ${n === 1 ? t('day') : t('daysN')}</option>`).join('')}</select></div>
+        <div style="flex:1"><label class="field" for="plan-pace">${t('pace')}</label>
+          <select id="plan-pace" data-bind="plan.pace">${Object.entries(PACES).map(([k, v]) => `<option value="${k}" ${k === p.pace ? 'selected' : ''}>${isEn() ? PACE_EN[k] : v.label} ${t('paceHint', { h: v.hours })}</option>`).join('')}</select></div>
       </div>
-      <label class="field">旅遊偏好(可複選,不選則推薦熱門景點)</label>
+      <label class="field">${t('prefs')}</label>
       ${interestChips(p.interests, 'plan')}
-      <label class="row small" style="margin-top:10px"><input type="checkbox" data-bind="plan.returnToStart" ${p.returnToStart ? 'checked' : ''}/> 最後一天回到出發地</label>
-      <div style="margin-top:12px"><button class="btn" data-action="make-plan">產生行程</button></div>
+      <label class="row small" style="margin-top:10px"><input type="checkbox" id="plan-return" data-bind="plan.returnToStart" ${p.returnToStart ? 'checked' : ''}/> ${t('returnStart')}</label>
+      <div style="margin-top:12px"><button class="btn" data-action="make-plan">${t('makePlan')}</button></div>
     </div>
     ${result}
-    ${p.result ? '<p class="notice">行程由系統依景點停留時間與交通時間自動估算,實際請依營業時間與天氣彈性調整。</p>' : ''}`;
+    ${p.result ? `<p class="notice">${t('planNote')}</p>` : ''}
+    ${renderSaved()}`;
 }
 
 function renderItem(it) {
   if (it.type === 'travel') {
     const r = it.route;
-    const how = r.legs.map((l) => `${MODE_INFO[l.mode].icon} ${l.name}`).join(' → ');
-    return `<li class="travel"><strong>移動:${placeName(it.from)} → ${placeName(it.to)}</strong>
-      <div class="small muted">${esc(how)} ・ 約 ${formatDuration(r.totalMin)} ・ NT$${r.totalFare}</div></li>`;
+    const how = r.legs.map((l) => `${MODE_INFO[l.mode].icon} ${lineName(l.name)}`).join(' → ');
+    return `<li class="travel"><strong>${t('move')} ${esc(dName(it.from))} → ${esc(dName(it.to))}</strong>
+      <div class="small muted">${esc(how)} ・ ${t('about')} ${duration(r.totalMin)} ・ NT$${r.totalFare}</div></li>`;
   }
   if (it.type === 'food') {
-    return `<li class="food"><strong>🍽️ 美食推薦:${esc(it.name)}</strong><div class="small muted">${esc(it.desc)}</div></li>`;
+    return `<li class="food"><strong>${t('foodPick')} ${dual(fName(it.destId, it), it.name)}</strong><div class="small muted">${esc(fDesc(it.destId, it))}</div></li>`;
   }
-  return `<li><strong>${esc(it.name)}</strong> <span class="muted small">(${it.hours} 小時)</span>
-    <div class="small muted">${esc(it.desc)}</div>
-    <a class="small" href="${mapsUrl(it.name)}" target="_blank" rel="noopener">地圖</a></li>`;
+  return `<li><strong>${dual(aName(it), it.name)}</strong> <span class="muted small">(${it.hours} ${t('hours')})</span>
+    <div class="small muted">${esc(aDesc(it))}</div>
+    <a class="small" href="${mapsUrl(it.name)}" target="_blank" rel="noopener">${t('map')}</a></li>`;
 }
 
 function renderRoute() {
   const r = state.route;
   const results = r.results == null ? '' : r.results.length
     ? r.results.map((x) => routeCard(x, r.from, r.to)).join('')
-    : '<div class="empty">找不到路線,可能需要租車或包車前往。</div>';
+    : `<div class="empty">${t('noRoute')}</div>`;
+  const d = getDestination(r.to);
   return `
-    <h2>🚆 交通路線規劃</h2>
+    <h2>${t('transitTitle')}</h2>
     <div class="card">
-      <label class="field">從</label>
-      <select data-bind="route.from">${destOptions(r.from)}</select>
-      <div style="text-align:center; margin-top:6px"><button class="btn ghost small" data-action="swap">⇅ 交換</button></div>
-      <label class="field">到</label>
-      <select data-bind="route.to">${destOptions(r.to)}</select>
-      <div style="margin-top:12px"><button class="btn" data-action="find-route">搜尋路線</button></div>
+      <label class="field" for="route-from">${t('from')}</label>
+      <select id="route-from" data-bind="route.from">${destOptions(r.from)}</select>
+      <div style="text-align:center; margin-top:6px"><button class="btn ghost small" data-action="swap">${t('swap')}</button></div>
+      <label class="field" for="route-to">${t('to')}</label>
+      <select id="route-to" data-bind="route.to">${destOptions(r.to)}</select>
+      <div style="margin-top:12px"><button class="btn" data-action="find-route">${t('search')}</button></div>
     </div>
     ${results}
-    <p class="notice">票價與時間為參考值,班次請以台灣高鐵、台鐵、客運公司公告為準。</p>
-    ${localTransportCard(r.to)}`;
-}
-
-function localTransportCard(destId) {
-  const d = getDestination(destId);
-  return d ? `<div class="card"><h3>🚏 到了${d.name}之後</h3><p class="small">${esc(d.localTransport)}</p></div>` : '';
+    <p class="notice">${t('fareNote')}</p>
+    <div class="card"><h3>${t('arrived', { p: esc(dName(d.id)) })}</h3><p class="small">${esc(dLocal(d))}</p></div>`;
 }
 
 function renderExplore() {
@@ -1512,53 +2071,125 @@ function renderExplore() {
   const byType = {};
   for (const f of d.foods) (byType[f.type] ??= []).push(f);
   const foods = Object.entries(byType).map(([type, list]) => `
-    <div class="card"><h3>${type}</h3>${list.map((f) => `<p><strong>${esc(f.name)}</strong><br><span class="small muted">${esc(f.desc)}</span>
-      <br><a class="small" href="${mapsUrl(`${d.name} ${f.name}`)}" target="_blank" rel="noopener">找附近店家</a></p>`).join('')}</div>`).join('');
+    <div class="card"><h3>${esc(fType(type))}</h3>${list.map((f) => `<p><strong>${dual(fName(d.id, f), f.name)}</strong><br><span class="small muted">${esc(fDesc(d.id, f))}</span>
+      <br><a class="small" href="${mapsUrl(`${d.name} ${f.name}`)}" target="_blank" rel="noopener">${t('findShops')}</a></p>`).join('')}</div>`).join('');
+  const shops = shopsOf(d.id);
   return `
-    <h2>🍜 吃喝玩樂</h2>
-    <select data-bind="explore.destId">${destOptions(d.id)}</select>
+    <h2>${t('eatTitle')}</h2>
+    <select id="explore-dest" data-bind="explore.destId" aria-label="${t('region')}">${destOptions(d.id)}</select>
     <div class="card" style="margin-top:12px">
-      <h3>${d.name}</h3><p>${esc(d.intro)}</p><p class="small muted">🚏 ${esc(d.localTransport)}</p>
+      <h3>${dual(dName(d.id), d.name)}</h3><p>${esc(dIntro(d))}</p><p class="small muted">🚏 ${esc(dLocal(d))}</p>
     </div>
-    <h2>😋 好吃的</h2>
-    ${foods || '<div class="empty">這裡以自然景觀為主,建議回到鄰近市區用餐。</div>'}
-    ${shopsOf(d.id).length ? `<h2>📍 在地名店</h2>
-    <p class="muted small">長年口碑老店。評分會變動,點「看 Google 評分」可看最新星等、評論與營業時間。</p>
-    <div class="grid">${shopsOf(d.id).map((x) => `<div class="card">
-      <h3>${esc(x.name)}</h3>
-      <div class="muted small">${esc(x.dish)} ・ ${esc(x.area)}</div>
-      <p class="small">${esc(x.note)}</p>
-      <a class="btn ghost small" href="${mapsUrl(`${x.name} ${d.name}`)}" target="_blank" rel="noopener">⭐ 看 Google 評分</a>
+    <h2>${t('eats')}</h2>
+    ${foods || `<div class="empty">${t('noFood')}</div>`}
+    ${shops.length ? `<h2>${t('shopsTitle')}</h2>
+    <p class="muted small">${t('shopsHint')}</p>
+    <div class="grid">${shops.map((x) => `<div class="card">
+      <h3>${dual(sName(x), x.name)}</h3>
+      <div class="muted small">${esc(dishLabel(d.id, x.dish))} ・ ${esc(sArea(x))}</div>
+      <p class="small">${esc(sNote(x))}</p>
+      <div class="row">
+        <a class="btn ghost small" href="${mapsUrl(`${x.name} ${d.name}`)}" target="_blank" rel="noopener">${t('googleRating')}</a>
+        ${isEn() ? `<button class="link small" data-action="show-card" data-zh="${esc(x.name)}" data-en="${esc(sName(x))}">${t('showLocal')}</button>` : ''}
+      </div>
     </div>`).join('')}</div>` : ''}
-    <h2>🎡 好玩的</h2>
-    <div class="grid">${d.attractions.map((a) => spotCard({ ...a, destName: d.name })).join('') || '<div class="empty">此地為交通轉運點</div>'}</div>`;
+    <h2>${t('fun')}</h2>
+    <div class="grid">${d.attractions.map((a) => spotCard({ ...a, destId: d.id })).join('') || `<div class="empty">${t('hub')}</div>`}</div>`;
 }
 
+// a shop's "dish" is either a food type (早餐) or one of the place's foods (牛肉麵)
+const dishLabel = (destId, dish) => (fType(dish) !== dish ? fType(dish) : fName(destId, { name: dish }));
+
 function renderSaved() {
-  if (!state.saved.length) return '<h2>⭐ 我的收藏</h2><div class="empty">還沒有收藏景點,在推薦清單點 ☆ 加入吧!</div>';
+  if (!state.saved.length) return `<h2>${t('savedTitle')}</h2><div class="empty">${t('savedEmpty')}</div>`;
   const items = state.saved.map((s) => findAttraction(s.id)).filter(Boolean);
   const stops = [...new Set(items.map((a) => a.destId))];
   const segs = planMultiStop(stops);
-  const routeHtml = segs.length ? `<div class="card"><h3>🧭 串聯路線(依收藏順序)</h3><ul class="legs">${segs.map((s) => s.route
-    ? `<li class="leg"><div class="mode">${MODE_INFO[s.route.legs[0].mode].icon}</div><div><strong>${placeName(s.from)} → ${placeName(s.to)}</strong>
-       <div class="small muted">${s.route.legs.map((l) => l.name).join(' → ')} ・ 約 ${formatDuration(s.route.totalMin)} ・ NT$${s.route.totalFare}</div></div></li>`
-    : `<li class="leg"><div class="mode">🚕</div><div>${placeName(s.from)} → ${placeName(s.to)}:建議租車</div></li>`).join('')}</ul></div>` : '';
-  return `<h2>⭐ 我的收藏</h2>
+  const routeHtml = segs.length ? `<div class="card"><h3>${t('chain')}</h3><ul class="legs">${segs.map((s) => s.route
+    ? `<li class="leg"><div class="mode">${MODE_INFO[s.route.legs[0].mode].icon}</div><div><strong>${esc(dName(s.from))} → ${esc(dName(s.to))}</strong>
+       <div class="small muted">${s.route.legs.map((l) => esc(lineName(l.name))).join(' → ')} ・ ${t('about')} ${duration(s.route.totalMin)} ・ NT$${s.route.totalFare}</div></div></li>`
+    : `<li class="leg"><div class="mode">🚕</div><div>${esc(dName(s.from))} → ${esc(dName(s.to))}: ${t('needCar')}</div></li>`).join('')}</ul></div>` : '';
+  return `<h2>${t('savedTitle')}</h2>
     ${items.map((a, i) => `<div class="card row spread">
-      <div><strong>${esc(a.name)}</strong><div class="muted small">${a.destName} ・ ${a.hours} 小時</div></div>
+      <div><strong>${dual(aName(a), a.name)}</strong><div class="muted small">${esc(dName(a.destId))} ・ ${a.hours} ${t('hours')}</div></div>
       <div class="row">
-        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="-1" ${i === 0 ? 'disabled' : ''}>↑</button>
-        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="1" ${i === items.length - 1 ? 'disabled' : ''}>↓</button>
-        <button class="btn ghost small" data-action="save" data-id="${a.id}">移除</button>
+        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="-1" ${i === 0 ? 'disabled' : ''} aria-label="Up">↑</button>
+        <button class="btn ghost small" data-action="move" data-id="${a.id}" data-dir="1" ${i === items.length - 1 ? 'disabled' : ''} aria-label="Down">↓</button>
+        <button class="btn ghost small" data-action="save" data-id="${a.id}">${t('remove')}</button>
       </div></div>`).join('')}
     ${routeHtml}`;
 }
 
-const PAGES = { home: renderHome, plan: renderPlan, route: renderRoute, explore: renderExplore, saved: renderSaved };
+function phraseCard(p, i) {
+  return `<button class="phrase" data-action="show-phrase" data-i="${i}">
+    <span class="zh-big">${esc(p.zh)}</span>
+    <span class="small muted">${esc(p.py)}</span>
+    <span class="small">${esc(p.en)}</span>
+  </button>`;
+}
+
+function teaOrder() {
+  const x = state.help.tea;
+  const pick = (list, i) => list[i];
+  const d = pick(TEA.drinks, x.drink); const s = pick(TEA.sugar, x.sugar); const ice = pick(TEA.ice, x.ice); const size = pick(TEA.size, x.size);
+  return { zh: `${size.zh}${d.zh},${s.zh}${ice.zh}`, py: '', en: `${size.en} ${d.en}, ${s.en.toLowerCase()}, ${ice.en.toLowerCase()}` };
+}
+
+function teaSelect(key, list) {
+  return `<select id="tea-${key}" data-bind="help.tea.${key}">${list.map((o, i) => `<option value="${i}" ${state.help.tea[key] === i ? 'selected' : ''}>${esc(isEn() ? `${o.en} · ${o.zh}` : o.zh)}</option>`).join('')}</select>`;
+}
+
+function renderHelp() {
+  const h = state.help;
+  const photo = h.photo.available ? `
+      <p class="small muted">${t('photoHint')}</p>
+      <label class="btn" for="photo-input" ${h.photo.busy ? 'aria-disabled="true"' : ''}>${h.photo.busy ? t('thinking') : t('photoBtn')}</label>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" hidden ${h.photo.busy ? 'disabled' : ''} />
+      ${h.photo.text ? `<div class="bubble bot" id="photo-out" style="margin-top:10px;max-width:100%">${esc(h.photo.text)}</div>` : '<div id="photo-out"></div>'}`
+    : `<p class="small muted">${t('photoNone')}</p>`;
+  const custom = h.custom;
+  const tea = teaOrder();
+  return `
+    <h2>${t('helpTitle')}</h2>
+    <div class="card"><h3>${t('photoTitle')}</h3>${photo}</div>
+
+    <h2>${t('phrasesTitle')}</h2>
+    <p class="muted small">${t('phrasesHint')}</p>
+    <div class="phrases">${PHRASES.map(phraseCard).join('')}</div>
+
+    ${state.aiMode === 'ai' ? `<div class="card" style="margin-top:12px"><h3>${t('customTitle')}</h3>
+      <form class="ask" data-form="phrase">
+        <input type="text" name="p" id="phrase-q" placeholder="${esc(t('customPlaceholder'))}" autocomplete="off" ${custom.busy ? 'disabled' : ''} />
+        <button class="btn" type="submit" ${custom.busy ? 'disabled' : ''}>${custom.busy ? t('thinking') : t('make')}</button>
+      </form>
+      ${custom.error ? `<p class="small">${esc(custom.error)}</p>` : ''}
+      ${custom.card ? `<div class="phrases" style="margin-top:10px">${phraseCard(custom.card, 'custom')}</div>` : ''}
+    </div>` : ''}
+
+    <div class="card" style="margin-top:12px"><h3>${t('teaTitle')}</h3>
+      <div class="tea-grid">
+        <label class="field" for="tea-drink">🧋</label>${teaSelect('drink', TEA.drinks)}
+        <label class="field" for="tea-size">📏</label>${teaSelect('size', TEA.size)}
+        <label class="field" for="tea-sugar">${t('sugar')}</label>${teaSelect('sugar', TEA.sugar)}
+        <label class="field" for="tea-ice">${t('ice')}</label>${teaSelect('ice', TEA.ice)}
+      </div>
+      <div class="phrases" style="margin-top:10px">${phraseCard(tea, 'tea')}</div>
+    </div>
+
+    <h2>${t('tipsTitle')}</h2>
+    <div class="card"><ul class="tips">${TIPS.map((x) => `<li><span>${x.icon}</span><span>${esc(isEn() ? x.en : x.zh)}</span></li>`).join('')}</ul></div>
+
+    <h2>${t('sosTitle')}</h2>
+    <div class="card"><ul class="tips">${SOS.map((x) => `<li><span class="sos-num">${x.num}</span><span>${esc(isEn() ? x.en : x.zh)}</span></li>`).join('')}</ul></div>`;
+}
+
+const PAGES = { home: renderHome, plan: renderPlan, route: renderRoute, explore: renderExplore, help: renderHelp };
 
 function render() {
+  document.documentElement.lang = isEn() ? 'en' : 'zh-Hant-TW';
+  document.getElementById('lang-btn').textContent = t('langToggle');
+  nav.innerHTML = TABS.map(([id, icon, key]) => `<button data-tab="${id}" class="${state.tab === id ? 'active' : ''}"><span>${icon}</span>${t(key)}</button>`).join('');
   view.innerHTML = PAGES[state.tab]();
-  document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.tab === state.tab));
   const chat = document.getElementById('chat');
   if (chat) chat.scrollTop = chat.scrollHeight;
 }
@@ -1569,27 +2200,53 @@ function go(tab) {
   window.scrollTo(0, 0);
 }
 
-// ---------- 事件 ----------
-document.querySelector('.tabbar').addEventListener('click', (e) => {
+function showCard(card) {
+  overlay.innerHTML = `<div class="zh-huge">${esc(card.zh)}</div>
+    ${card.py ? `<div class="py">${esc(card.py)}</div>` : ''}
+    ${card.en ? `<div class="en">${esc(card.en)}</div>` : ''}
+    <div class="small close-hint">${t('tapClose')}</div>`;
+  overlay.hidden = false;
+}
+
+// ---------- events ----------
+overlay.addEventListener('click', () => { overlay.hidden = true; });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') overlay.hidden = true; });
+
+document.getElementById('lang-btn').addEventListener('click', () => {
+  setLang(isEn() ? 'zh' : 'en');
+  storage.set('lang', getLang());
+  // refresh the greeting if the chat hasn't started yet
+  if (state.chat.length === 1 && state.chat[0].greeting) state.chat[0].text = askGuide('').text;
+  render();
+});
+
+nav.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-tab]');
   if (b) go(b.dataset.tab);
 });
 
-view.addEventListener('change', (e) => {
+view.addEventListener('change', async (e) => {
+  if (e.target.id === 'photo-input') {
+    const file = e.target.files?.[0];
+    if (file) runPhoto(file);
+    return;
+  }
   const path = e.target.dataset.bind;
   if (!path) return;
-  const [a, b] = path.split('.');
+  const keys = path.split('.');
   let value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-  if (path === 'plan.days') value = Number(value);
-  if (b) state[a][b] = value; else state[a] = value;
-  if (path === 'route.to') state.route.results = null;
+  if (path === 'plan.days' || path.startsWith('help.tea.')) value = Number(value);
+  let obj = state;
+  for (const k of keys.slice(0, -1)) obj = obj[k];
+  obj[keys.at(-1)] = value;
+  if (path === 'route.to' || path === 'route.from') state.route.results = null;
   render();
 });
 
 view.addEventListener('submit', (e) => {
-  if (e.target.dataset.form !== 'ask') return;
   e.preventDefault();
-  sendQuestion(e.target.q.value);
+  if (e.target.dataset.form === 'ask') sendQuestion(e.target.q.value);
+  if (e.target.dataset.form === 'phrase') runPhrase(e.target.p.value);
 });
 
 function applyAction(action) {
@@ -1601,7 +2258,9 @@ function applyAction(action) {
 async function sendQuestion(raw) {
   const q = raw.trim();
   if (!q || state.chatBusy) return;
-  const local = askGuide(q);
+  // answer offline in the language the question was typed in
+  const qLang = /[一-鿿]/.test(q) && !/[a-z]{3,}/i.test(q) ? 'zh' : 'en';
+  const local = askGuide(q, qLang);
   applyAction(local.action);
   state.chat.push({ who: 'me', text: q });
 
@@ -1612,30 +2271,27 @@ async function sendQuestion(raw) {
     return;
   }
 
-  const bot = { who: 'bot', text: '思考中…', pending: true };
+  const bot = { who: 'bot', text: t('thinking'), pending: true };
   state.chat.push(bot);
   state.chatBusy = true;
   render();
   const idx = state.chat.length - 1;
-  const history = state.chat.slice(0, -1).filter((m) => !m.pending);
+  const history = state.chat.slice(0, -1).filter((m) => !m.pending && !m.greeting);
   const res = await askClaude(history, {
-    onText: (t) => {
-      bot.text = t;
+    onText: (text) => {
+      bot.text = text;
       const el = document.getElementById(`bubble-${idx}`);
-      if (el) { el.textContent = t; el.classList.remove('pending'); }
+      if (el) { el.textContent = text; el.classList.remove('pending'); }
       const chat = document.getElementById('chat');
       if (chat) chat.scrollTop = chat.scrollHeight;
     },
   });
   bot.pending = false;
   if (!res || res.permanent) {
-    // 無法使用 Claude:改用離線導遊
     state.aiMode = 'offline';
     bot.text = local.text;
   } else if (res.error) {
-    bot.text = res.text?.trim() ? `${res.text}\n(回答中斷了)` : res.error === 'rate_limited'
-      ? `現在問的人太多了,先給你離線版的回答:\n${local.text}`
-      : `連線不太順,先給你離線版的回答:\n${local.text}`;
+    bot.text = res.text?.trim() ? `${res.text}\n${t('cutOff')}` : `${res.error === 'rate_limited' ? t('busy') : t('flaky')}\n${local.text}`;
   } else {
     bot.text = res.text;
   }
@@ -1645,16 +2301,50 @@ async function sendQuestion(raw) {
   view.querySelector('#ask-q')?.focus();
 }
 
+async function runPhoto(file) {
+  const p = state.help.photo;
+  p.busy = true;
+  p.text = t('thinking');
+  render();
+  const res = await translatePhoto(file, getLang(), {
+    onText: (text) => {
+      p.text = text;
+      const el = document.getElementById('photo-out');
+      if (el) { el.className = 'bubble bot'; el.style.cssText = 'margin-top:10px;max-width:100%'; el.textContent = text; }
+    },
+  });
+  p.busy = false;
+  p.text = res.text?.trim() ? res.text : t('tryAgain');
+  render();
+}
+
+async function runPhrase(raw) {
+  const text = raw.trim();
+  const c = state.help.custom;
+  if (!text || c.busy) return;
+  c.busy = true;
+  c.error = '';
+  render();
+  const res = await makePhrase(text);
+  c.busy = false;
+  if (res.card) c.card = res.card; else c.error = t('tryAgain');
+  render();
+}
+
 view.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const { action } = el.dataset;
+
   if (action === 'ask') {
     sendQuestion(el.dataset.q);
-    return;
-  }
-
-  if (action === 'toggle-interest') {
+  } else if (action === 'show-phrase') {
+    const i = el.dataset.i;
+    showCard(i === 'custom' ? state.help.custom.card : i === 'tea' ? teaOrder() : PHRASES[Number(i)]);
+  } else if (action === 'show-card') {
+    const lead = isEn() ? 'Please take me here · 請載我到這裡' : '';
+    showCard({ zh: el.dataset.zh, py: lead, en: el.dataset.en });
+  } else if (action === 'toggle-interest') {
     const list = el.dataset.group === 'home' ? state.interests : state.plan.interests;
     const i = list.indexOf(el.dataset.key);
     if (i >= 0) list.splice(i, 1); else list.push(el.dataset.key);
@@ -1682,19 +2372,19 @@ view.addEventListener('click', (e) => {
     render();
   } else if (action === 'nearby') {
     if (!navigator.geolocation) {
-      state.nearby = '<div class="empty">此裝置不支援定位。</div>';
+      state.nearby = { error: 'noGeo' };
       render();
       return;
     }
     el.disabled = true;
-    el.textContent = '定位中…';
+    el.textContent = t('locating');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        state.nearby = nearbyAttractions(pos.coords.latitude, pos.coords.longitude).map(spotCard).join('');
+        state.nearby = { items: nearbyAttractions(pos.coords.latitude, pos.coords.longitude) };
         render();
       },
       () => {
-        state.nearby = '<div class="empty">無法取得位置,請確認已允許定位權限。</div>';
+        state.nearby = { error: 'geoFail' };
         render();
       },
       { timeout: 10000 },
@@ -1706,7 +2396,11 @@ render();
 
 getSampler().then((s) => {
   if (state.aiMode === 'checking') state.aiMode = s ? 'ai' : 'offline';
-  if (state.tab === 'home' && !state.chatBusy) render();
+  if (!state.chatBusy) render();
+});
+getRawSampler().then((raw) => {
+  state.help.photo.available = Boolean(raw?.images);
+  if (state.tab === 'help') render();
 });
 
 
