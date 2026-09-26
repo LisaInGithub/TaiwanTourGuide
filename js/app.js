@@ -2,6 +2,7 @@ import { DESTINATIONS, INTERESTS, REGIONS, MODE_INFO, getDestination } from './d
 import { planAlternatives, planMultiStop, formatDuration, placeName, TRANSFER_MINUTES } from './planner.js';
 import { generateItinerary, recommend, PACES } from './itinerary.js';
 import { askGuide } from './guide.js';
+import { askClaude, getSampler } from './ai-guide.js';
 import { nearbyAttractions, mapsUrl, transitUrl } from './geo.js';
 
 const view = document.getElementById('view');
@@ -21,6 +22,8 @@ const state = {
   interests: [],
   region: '',
   chat: [{ who: 'bot', text: askGuide('').text }],
+  chatBusy: false,
+  aiMode: 'checking', // checking | ai | offline
   nearby: null,
   plan: { start: 'taipei', days: 3, pace: 'normal', interests: [], returnToStart: true, result: null },
   route: { from: 'taipei', to: 'tainan', results: null },
@@ -90,17 +93,26 @@ function routeCard(r, from, to) {
   </div>`;
 }
 
+const SAMPLE_QUESTIONS = ['台北去台南要多久?', '花蓮三天怎麼玩?', '哪裡看夕陽最美?', '下雨天台中去哪?'];
+
+function aiBadge() {
+  if (state.aiMode === 'ai') return '<span class="tag">✨ 由 Claude 回答</span>';
+  if (state.aiMode === 'offline') return '<span class="tag">離線導遊</span>';
+  return '';
+}
+
 // ---------- 各頁面 ----------
 function renderHome() {
   const recs = recommend(state.interests, { region: state.region || undefined, limit: 6 });
   return `
     <div class="card">
-      <h2 style="margin-top:0">💬 問問小導遊</h2>
-      <div class="chat" id="chat">${state.chat.map((m) => `<div class="bubble ${m.who}">${esc(m.text)}</div>`).join('')}</div>
+      <div class="row spread"><h2 style="margin:0">💬 問問小導遊</h2>${aiBadge()}</div>
+      <div class="chat" id="chat">${state.chat.map((m, i) => `<div class="bubble ${m.who}${m.pending ? ' pending' : ''}" id="bubble-${i}">${esc(m.text)}</div>`).join('')}</div>
       <form class="ask" data-form="ask">
-        <input type="text" name="q" placeholder="例:台南有什麼好吃的?" autocomplete="off" />
-        <button class="btn" type="submit">送出</button>
+        <input type="text" name="q" id="ask-q" placeholder="例:花蓮三天怎麼玩?" autocomplete="off" ${state.chatBusy ? 'disabled' : ''} />
+        <button class="btn" type="submit" ${state.chatBusy ? 'disabled' : ''}>${state.chatBusy ? '回答中…' : '送出'}</button>
       </form>
+      <div class="chips" style="margin-top:8px">${SAMPLE_QUESTIONS.map((q) => `<button class="chip small" data-action="ask" data-q="${esc(q)}" ${state.chatBusy ? 'disabled' : ''}>${esc(q)}</button>`).join('')}</div>
     </div>
 
     <h2>✨ 導遊推薦</h2>
@@ -260,20 +272,69 @@ view.addEventListener('change', (e) => {
 view.addEventListener('submit', (e) => {
   if (e.target.dataset.form !== 'ask') return;
   e.preventDefault();
-  const q = e.target.q.value.trim();
-  if (!q) return;
-  const ans = askGuide(q);
-  state.chat.push({ who: 'me', text: q }, { who: 'bot', text: ans.text });
-  if (ans.action?.type === 'route') Object.assign(state.route, { from: ans.action.from, to: ans.action.to, results: planAlternatives(ans.action.from, ans.action.to) });
-  if (ans.action?.type === 'food' || ans.action?.type === 'dest') state.explore.destId = ans.action.destId;
-  render();
-  view.querySelector('input[name=q]')?.focus();
+  sendQuestion(e.target.q.value);
 });
+
+function applyAction(action) {
+  if (action?.type === 'route') Object.assign(state.route, { from: action.from, to: action.to, results: planAlternatives(action.from, action.to) });
+  if (action?.type === 'food' || action?.type === 'dest') state.explore.destId = action.destId;
+  if (action?.type === 'plan') Object.assign(state.plan, { start: action.start, days: action.days, interests: [...action.interests], result: null });
+}
+
+async function sendQuestion(raw) {
+  const q = raw.trim();
+  if (!q || state.chatBusy) return;
+  const local = askGuide(q);
+  applyAction(local.action);
+  state.chat.push({ who: 'me', text: q });
+
+  if (state.aiMode === 'offline') {
+    state.chat.push({ who: 'bot', text: local.text });
+    render();
+    view.querySelector('#ask-q')?.focus();
+    return;
+  }
+
+  const bot = { who: 'bot', text: '思考中…', pending: true };
+  state.chat.push(bot);
+  state.chatBusy = true;
+  render();
+  const idx = state.chat.length - 1;
+  const history = state.chat.slice(0, -1).filter((m) => !m.pending);
+  const res = await askClaude(history, {
+    onText: (t) => {
+      bot.text = t;
+      const el = document.getElementById(`bubble-${idx}`);
+      if (el) { el.textContent = t; el.classList.remove('pending'); }
+      const chat = document.getElementById('chat');
+      if (chat) chat.scrollTop = chat.scrollHeight;
+    },
+  });
+  bot.pending = false;
+  if (!res || res.permanent) {
+    // 無法使用 Claude:改用離線導遊
+    state.aiMode = 'offline';
+    bot.text = local.text;
+  } else if (res.error) {
+    bot.text = res.text?.trim() ? `${res.text}\n(回答中斷了)` : res.error === 'rate_limited'
+      ? `現在問的人太多了,先給你離線版的回答:\n${local.text}`
+      : `連線不太順,先給你離線版的回答:\n${local.text}`;
+  } else {
+    bot.text = res.text;
+  }
+  state.chatBusy = false;
+  render();
+  view.querySelector('#ask-q')?.focus();
+}
 
 view.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const { action } = el.dataset;
+  if (action === 'ask') {
+    sendQuestion(el.dataset.q);
+    return;
+  }
 
   if (action === 'toggle-interest') {
     const list = el.dataset.group === 'home' ? state.interests : state.plan.interests;
@@ -324,6 +385,11 @@ view.addEventListener('click', (e) => {
 });
 
 render();
+
+getSampler().then((s) => {
+  if (state.aiMode === 'checking') state.aiMode = s ? 'ai' : 'offline';
+  if (state.tab === 'home' && !state.chatBusy) render();
+});
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});

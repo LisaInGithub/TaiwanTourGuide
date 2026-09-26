@@ -8,6 +8,9 @@ export const PACES = {
   packed: { label: '緊湊', hours: 9 },
 };
 
+// 第一次來台灣的經典必去(沒選偏好時優先推薦)
+const CLASSICS = ['tp101', 'jiufen-st', 'sml-bike', 'anping', 'alishan-forest', 'npm', 'taroko-np', 'fengjia', 'pier2', 'shifen', 'qixingtan', 'kt-street'];
+
 export function scoreAttraction(att, interests) {
   const matches = att.tags.filter((t) => interests.includes(t)).length;
   return matches * 3 + (att.popular ? 1 : 0);
@@ -36,13 +39,20 @@ export function recommend(interests, { region, limit = 8 } = {}) {
       list.push({ ...a, destId: d.id, destName: d.name, score: scoreAttraction(a, interests) });
     }
   }
-  return list.sort((x, y) => y.score - x.score || x.name.localeCompare(y.name, 'zh-Hant')).slice(0, limit);
+  const classic = (a) => (CLASSICS.includes(a.id) ? CLASSICS.indexOf(a.id) : CLASSICS.length);
+  list.sort((x, y) => y.score - x.score || classic(x) - classic(y) || x.name.localeCompare(y.name, 'zh-Hant'));
+  // 同一個地點最多推薦 2 個,讓結果分散到不同城市
+  const perDest = {};
+  const diverse = list.filter((a) => (perDest[a.destId] = (perDest[a.destId] ?? 0) + 1) <= 2);
+  const rest = list.filter((a) => !diverse.includes(a));
+  return [...diverse, ...rest].slice(0, limit);
 }
 
-function pickNextDestination(current, interests, usedAtt, visitedDest) {
+function pickNextDestination(current, interests, usedAtt, visitedDest, region) {
   let best = null;
   for (const d of DESTINATIONS) {
     if (d.id === current || visitedDest.has(d.id)) continue;
+    if (region && d.region !== region) continue;
     const score = destinationScore(d, interests, usedAtt);
     if (score <= 0) continue;
     const hrs = travelMinutes(current, d.id) / 60;
@@ -64,9 +74,11 @@ function pickMeal(dest, interests, usedFoods, hasNightSpot) {
 }
 
 /**
- * @param {{start:string, days:number, interests:string[], pace?:keyof PACES, returnToStart?:boolean}} opts
+ * @param {{start:string, days:number, interests:string[], pace?:keyof PACES, returnToStart?:boolean, stayInRegion?:boolean}} opts
+ *   stayInRegion:只在出發地同一區域內移動(例如「花蓮三天」就只排東部)
  */
-export function generateItinerary({ start, days, interests = [], pace = 'normal', returnToStart = false }) {
+export function generateItinerary({ start, days, interests = [], pace = 'normal', returnToStart = false, stayInRegion = false }) {
+  const region = stayInRegion ? getDestination(start).region : null;
   const dayHours = PACES[pace]?.hours ?? PACES.normal.hours;
   const usedAtt = new Set();
   const usedFoods = new Set();
@@ -97,9 +109,9 @@ export function generateItinerary({ start, days, interests = [], pace = 'normal'
         items.push({ type: 'spot', destId: current, destName: dest.name, ...fit });
         continue;
       }
-      if (candidates.length > 0 || isLastDay) break; // 今天時間用完,明天繼續
+      if (candidates.length > 0 || (isLastDay && returnToStart)) break; // 今天時間用完,明天繼續
 
-      const next = pickNextDestination(current, interests, usedAtt, visitedDest);
+      const next = pickNextDestination(current, interests, usedAtt, visitedDest, region);
       if (!next) break;
       if (next.hrs > budget && items.length > 0) break; // 車程太長,改到隔天早上出發
       const route = planRoute(current, next.id, 'fastest');
